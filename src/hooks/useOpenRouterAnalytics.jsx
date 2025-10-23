@@ -64,7 +64,7 @@ export const useOpenRouterAnalytics = () => {
         const headers = {
             'Authorization': `Bearer ${API_KEY}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'http://localhost:5173',
+            'HTTP-Referer': 'https://gestiondestockfrontdotnet.netlify.app/',
             'X-Title': 'Stock Management App'
         };
 
