@@ -1,0 +1,325 @@
+*,
+*::after,
+*::before
+{
+    box-sizing: inherit;
+    /* font-family: Arial, Helvetica, sans-serif; */
+    font: 1.05em sans-serif;
+    /* font-weight: 500; */
+}
+html, body {
+    height: 100%;
+    margin: 0;
+    scroll-behavior: smooth;
+    overflow: visible !important;
+    /* background:#ced4da !important; */
+}
+.demo-logo-vertical
+{
+    position: relative;
+    /* width: 200px; */
+    height: 50px;
+    /* background-color: aqua; */
+}
+/* .flexCardstat
+{
+    /* margin: 10px; *
+    margin-left: -10px;
+    width: 100%;
+    margin-top: 50px;
+    position: relative;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    /* padding: 24px; *
+} */
+.flexCardstat {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-left: -40px;
+  margin-right: -72px;
+  position: relative;
+  /* width: ; */
+
+  /* gap: 1.5rem; */
+}
+.ant-card
+{
+  padding-left: 2rem;
+
+    /* color: white; */
+    /* font-weight: 700;  */
+    cursor: pointer;
+    border-radius: 30px;
+    /* box-shadow: 4px 4px 8px black; */
+    width: 200px;
+    border: 1px solid #ededed;
+    margin: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: small;
+    overflow-x: hidden;
+
+}
+.ant-card:hover
+{
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+.ant-card-body
+{
+    padding: 10px;
+}
+.ant-card-head
+{
+    /* color: white !important; */
+    border-bottom: none !important;
+    font-weight: 550 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+.ant-menu-title-content:hover
+{
+    /* color: white !important; */
+}
+table
+{
+    /* margin-top: 100px; */
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed ; /* force répartition égale des colonnes et évite le débordement */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: small;
+    /* position: relative; */
+}
+th, td
+{
+    text-align: center !important;
+    /* border: 1px solid gray; */
+    /* width: 10px !important; */
+    overflow: hidden;           /* cache le contenu trop long */
+    text-overflow: ellipsis;    /* … pour le texte tronqué */
+    white-space: nowrap;
+    
+}
+tbody
+{
+}
+th, thead
+{
+    background-color: #f6f4ff !important;
+    color: #bfb6ed;
+}
+h2
+{
+    color: rgb(0 21 41);
+}
+.dash
+{
+    overflow-y: scroll;
+    height: 100%;
+    padding: 20px;
+}
+.dash > *
+{
+    padding: 10px;
+}
+.ligne-critique {
+    background-color: #a71622; /* rouge clair */
+}
+.contentcentre
+{
+    /* background: #eceff1; */
+	display: flex;
+    flex-flow: column;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+}
+.contentcentre > *
+{
+    padding: 20px;
+}
+.ant-layout-sider
+{
+    position: fixed;
+    z-index: 100;
+    background: #f6f4ff !important;
+    color:#09022b !important;
+
+}
+.ant-menu
+{
+    background: #f6f4ff !important;
+    color: #09022b !important;
+}
+.Header
+{
+    position: fixed;
+    z-index: 99;
+    width: 100vw;
+    color:#09022b !important;
+    background: white !important;
+    text-align: right;
+}
+.buttonHeader
+{
+    color:#09022b;
+    margin-left: 170px;
+    margin-top: 10px;
+    
+}
+.site-layout
+{
+    background: white !important;
+}
+.Menu
+{
+    color: #09022b !important;
+}
+.Menu > *:hover, .ant-menu-item-selected 
+{
+    background: #8370fe !important;
+    color: white !important;
+    border-radius: 45px !important;
+}
+.contentBody
+{
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-gap: .5rem;
+  margin-left: -40px;
+  margin-right: -72px;
+  position: relative;
+}
+.produits
+{
+    border: 1px solid #ededed;
+    /* max-width: 100%; */
+    /* width: 738px; */
+    grid-column: span 2;
+    border-radius: 25px;
+    padding: 20px;
+    /* right: 10px;   */
+    /* left: 5px;   */
+    display: flex;
+    flex-flow: column;
+    align-items: flex-start;
+    position: relative;
+    box-sizing: border-box; /* pour que padding soit pris en compte */
+    overflow: hidden;    
+    /* position: relative; */
+}
+
+.addProduit
+{
+    border: 1px solid #ededed;
+    /* max-width: 100%; */
+    /* width: 350px; */
+    border-radius: 25px;
+    padding: 20px;
+    /* right: px; */
+    /* margin-right: -80px; */
+    /* margin-left: 12px; */
+    /* position: absolute; */
+
+}
+.boutonAddProduit
+{
+    padding: 22px;
+    border-radius: 30px;
+    background: #8370fe;
+    color: white;
+    border: 1px solid #8370fe;
+}
+
+
+/* AnalyticsPanel.css */
+.analytics-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    border: 1px solid #e1e5e9;
+}
+
+.analytics-panel h3 {
+    color: #2d3748;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+}
+
+.analysis-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.analysis-select {
+    padding: 10px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.analyze-btn {
+    padding: 10px 24px;
+    background: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.analyze-btn:hover:not(:disabled) {
+    background: #3182ce;
+}
+
+.analyze-btn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+}
+
+.analysis-results {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid #4299e1;
+}
+
+.analysis-results h4 {
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.analysis-content {
+    line-height: 1.6;
+    color: #4a5568;
+}
+
+.analysis-content p {
+    margin: 8px 0;
+}
+
+.error-message {
+    background: #fed7d7;
+    color: #c53030;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+}
