@@ -66,15 +66,26 @@ function AjouterCommande({ onCommandeAdded }) {
         // console.log(values);
         // console.log('fournisseur', fournisseur_produit);
         // console.log('produit', produits);
-        const supplier = fournisseurs.find(f => f.id === supplierId);
-        const supplierProductList = supplier ? supplier.products : [];
-        console.log('supplier', supplier);
-        console.log('supplierProductList', supplierProductList);
-        console.log('productId', productId);
-        console.log('is In supplierProductList', supplierProductList.includes(productId));
+    const supplier = fournisseurs.find(f => f.id === supplierId);
+    // Certaines réponses API utilisent 'products' et d'autres 'produits'.
+    // Normaliser et extraire une liste d'IDs (pas d'objets) pour la comparaison.
+    const supplierProductList = supplier ? (supplier.products ?? supplier.produits ?? []) : [];
+    console.log('supplier', supplier);
+    console.log('supplierProductList (raw)', supplierProductList);
+
+    // supplierProductList peut contenir des objets { id, ... } ou des ids simples.
+    const supplierProductIds = supplierProductList.map(p => (p && typeof p === 'object' ? p.id : p));
+
+    // Normaliser productId et les ids en string pour éviter mismatch number/string
+    const normalizedProductId = productId == null ? productId : String(productId);
+    const normalizedSupplierIds = supplierProductIds.map(id => (id == null ? id : String(id)));
+
+    console.log('productId', productId, 'normalizedProductId', normalizedProductId);
+    console.log('supplierProductIds (normalized)', normalizedSupplierIds);
+    console.log('is In supplierProductList', normalizedSupplierIds.includes(normalizedProductId));
         // console.log('supplierIdList', supplierIdList);
         try {
-            if (supplierProductList.includes(productId)) {
+            if (normalizedSupplierIds.includes(normalizedProductId)) {
                 const response = await axiosInstance.post(`${API_URL}Provides/`, {
                     quantity, 
                     productId,
@@ -230,31 +241,53 @@ export function CommandesFournisseurs() {
             cell: info => {
                 const { createdAt, delai, id } = info.getValue() || {};
 
-                if (!createdAt || !delai) return '—';
+                if (!createdAt || delai == null) return '—';
 
                 // Nettoyer la date
-                const safeDateStr = createdAt.replace(/\.(\d{3})\d*Z$/, '.$1Z');
+                const safeDateStr = typeof createdAt === 'string' ? createdAt.replace(/\.(\d{3})\d*Z$/, '.$1Z') : createdAt;
                 const date = new Date(safeDateStr);
                 if (isNaN(date)) return 'Date invalide';
 
-                // Extraire les jours du délai (ex : "3 00:00:00" → 3)
-                const joursMatch = delai.match(/^(\d+)\s/);
-                const jours = joursMatch ? parseInt(joursMatch[1]) : 0;
+                // delai peut arriver comme string ("3 00:00:00"), number, ou même objet.
+                // Gérer les différents types pour éviter 'delai.match is not a function'.
+                console.debug('delai raw:', delai, 'type:', typeof delai);
+
+                let jours = 0;
+                try {
+                    if (typeof delai === 'string') {
+                        // ex: "3 00:00:00" ou "3"
+                        const joursMatch = delai.match(/^(\d+)\s/);
+                        if (joursMatch) jours = parseInt(joursMatch[1], 10);
+                        else {
+                            const m = delai.match(/(\d+)/);
+                            if (m) jours = parseInt(m[1], 10);
+                        }
+                    } else if (typeof delai === 'number') {
+                        jours = delai;
+                    } else if (typeof delai === 'object' && delai !== null) {
+                        // Tentatives courantes selon différentes API
+                        if ('days' in delai) jours = Number(delai.days);
+                        else if ('Days' in delai) jours = Number(delai.Days);
+                        else if ('value' in delai) jours = Number(delai.value);
+                        else {
+                            // fallback: chercher un nombre dans la représentation JSON
+                            const s = JSON.stringify(delai);
+                            const m = s.match(/(\d+)/);
+                            if (m) jours = parseInt(m[1], 10);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Erreur parse delai:', e, delai);
+                    jours = 0;
+                }
+
+                if (!Number.isFinite(jours) || isNaN(jours)) jours = 0;
 
                 // Ajouter les jours
                 date.setDate(date.getDate() + jours);
 
                 const now = new Date();
-                //    const now = date.getDate() + 1;
-
-                //    console.log('now', now);
-                //    console.log('date', date);
                 const isRetard = now >= date;
-                // const isRetard = now >= date.getDate();
-                //   if (now >= date.getDate()) {
-
-                //     message.warning('Livraison'+id+' en retard !');
-                //   }
 
                 return (<span style={{ display: 'flex', alignItems: 'center' }}>
                     <span>{date.toLocaleDateString('fr-FR', {
