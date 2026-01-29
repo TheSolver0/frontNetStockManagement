@@ -12,6 +12,7 @@ import {
     CaretDownOutlined,
 
 } from '@ant-design/icons';
+import ResponsiveTable from '../components/ResponsiveTable';
 import DataTable from 'datatables.net-dt';
 import { getProduits, getUsers } from "../services/api";
 import { getCategories } from "../services/api";
@@ -335,55 +336,71 @@ export function Parametres() {
                 placeholder="Rechercher..."
                 value={globalFilter || ''}
                 onChange={e => setGlobalFilter(e.target.value)}
-                style={{ marginBottom: '1rem', width: '300px' }}
+                style={{ marginBottom: '1rem', width: '100%', maxWidth: 360 }} 
             />
 
             {/* <Flex style={{ marginTop: '20px', overflowY: 'scroll', flexFlow: 'column' }} direction="column" gap="20px"> */}
                 <Row justify="space-between">
                     <Col span={14}>
-                        <table id="myTable" className="table  table-hover table-striped-columns  align-middle">
-                            <caption>Liste des Utilisateurs</caption>
-                            <thead className="table-dark">
-                                {table.getHeaderGroups().map(headerGroup => (
-                                    <tr key={headerGroup.id}>
-                                        {headerGroup.headers.map(header => (
-                                            <th
-                                                key={header.id}
-                                                style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-                                                {flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                                {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                                            </th>
+                        <ResponsiveTable
+                        table={table}
+                        renderTable={() => (
+                            <>
+                                <table id="myTable" className="table table-hover table-striped-columns align-middle responsive-table">
+                                    <caption>Liste des Utilisateurs</caption>
+                                    <thead className="table-dark">
+                                        {table.getHeaderGroups().map(headerGroup => (
+                                            <tr key={headerGroup.id}>
+                                                {headerGroup.headers.map(header => (
+                                                    <th
+                                                        key={header.id}
+                                                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                                                        onClick={header.column.getToggleSortingHandler()}
+                                                    >
+                                                        {flexRender(
+                                                            header.column.columnDef.header,
+                                                            header.getContext()
+                                                        )}
+                                                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                    </th>
+                                                ))}
+                                            </tr>
                                         ))}
-                                    </tr>
-                                ))}
-                            </thead>
-                            <tbody>
+                                    </thead>
+                                    <tbody>
 
-                                {table.getRowModel().rows.map(row => (
-                                    <tr key={row.id} className={row.original.qte <= row.original.seuil ? 'table-danger' : ''}>
-                                        {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id}>
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
+                                        {table.getRowModel().rows.map(row => (
+                                            <tr key={row.id} className={row.original.qte <= row.original.seuil ? 'table-danger' : ''}>
+                                                {row.getVisibleCells().map(cell => (
+                                                    <td key={cell.id}>
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </td>
+                                                ))}
+                                            </tr>
                                         ))}
-                                    </tr>
-                                ))}
 
-                            </tbody>
-                        </table>
-                        <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
-                            <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
-                            <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
-                            <span>
-                                Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-                            </span>
-                        </div>
-                    </Col>
+                                    </tbody>
+                                </table>
+                                <div className="pagination-controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
+                                    <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
+                                    <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
+                                    <span>Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
+                                </div>
+                            </>
+                        )}
+                        renderActions={(row) => {
+                            if (!row) return null;
+                            const id = row.original?.id;
+                            return (
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <Popconfirm title="Suppression de l'utilisateur" description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?" onConfirm={() => handleDelete(id)} icon={<QuestionCircleOutlined style={{ color: 'red' }} />}>
+                                        <Button size="small" danger onClick={(e) => e.stopPropagation()}>Supprimer</Button>
+                                    </Popconfirm>
+                                </div>
+                            );
+                        }}
+                    />
+                    </Col> 
                     <Col span={8} style={{ marginTop: '-60px' }}>
                         <AjouterUser onUserAdded={(newUser) => setUser(prev => [...prev, newUser])} />
 
@@ -391,7 +408,8 @@ export function Parametres() {
                 </Row>
                 <Row justify="space-between">
                     <Col span={14}>
-                        <table id="myTable" className="table  table-hover table-striped-columns  align-middle">
+                        <div className="table-responsive">
+                            <table id="myTable" className="table table-hover table-striped-columns align-middle responsive-table">
                             <caption>Liste des catégories de produits</caption>
                             <thead className="table-dark">
                                 {table2.getHeaderGroups().map(headerGroup => (
@@ -426,13 +444,14 @@ export function Parametres() {
 
                             </tbody>
                         </table>
-                        <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
-                            <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
-                            <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
+                        <div className="pagination-controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
+                            <Button onClick={() => table2.previousPage()} disabled={!table2.getCanPreviousPage()}>Précédent</Button>
+                            <Button onClick={() => table2.nextPage()} disabled={!table2.getCanNextPage()}>Suivant</Button>
                             <span>
-                                Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+                                Page {table2.getState().pagination.pageIndex + 1} / {table2.getPageCount()}
                             </span>
                         </div>
+                    </div>
                     </Col>
                     <Col span={8} style={{ marginTop: '0px' }}>
                         <AjouterCategorie onCategorieAdded={(newCategorie) => setCategories(prev => [...prev, newCategorie])} />

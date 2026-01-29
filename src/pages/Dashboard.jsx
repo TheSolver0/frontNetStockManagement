@@ -3,7 +3,7 @@ import BarChart from './Bar';
 import './Dashboard.css';
 import LineChart from './Line';
 import ErrorBoundary from './ErrorBoundary';
-import { Button, Layout, Row, Col, theme, Flex, Typography, Modal, Spin } from 'antd';
+import { Button, Layout, Row, Col, theme, Flex, Typography, Modal, Spin, Card, Statistic, Grid } from 'antd';
 import { useAnalyticsAI } from '../hooks/useAnalyticsAI';
 import { useOpenRouterAnalytics } from '../hooks/useOpenRouterAnalytics';
 import {
@@ -31,6 +31,7 @@ import {
 import DataTable from 'datatables.net-dt';
 
 import AnalyticsPanel from '../components/AnalyticsPanel';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 import { getMouvements, getCommandesClient, getProduits, getClients, getFournisseurs } from "../services/api";
 
@@ -286,6 +287,7 @@ export function Dashboard() {
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
+    const screens = Grid.useBreakpoint();
 
 
 
@@ -326,122 +328,46 @@ export function Dashboard() {
         <ErrorBoundary>
             <div className="contentBody">
                 <div className="produits">
-                    <Flex justify="space-between" align="center" style={{ marginBottom: 24 }}>
-                        <h2>Dashboard</h2>
+                    <Flex justify="space-between" align="center" style={{ marginBottom: 24, gap: 16 }}>
+                        <h2 style={{ margin: 0 }}>Dashboard</h2>
                         <Button
                             type="primary"
                             icon={<RobotOutlined />}
                             onClick={handleAIAnalysis}
                             size="large"
-                            style={{ position: "absolute", right: "10px" }}
                         >
                             Analyse avec IA
                         </Button>
                     </Flex>
 
-                    {/* Cartes statistiques */}
-                    {/* <Row gutter={16} style={{ marginBottom: 24 }}>
-                        <Col span={6}>
-                            <div style={{ 
-                                background: '#e6f7ff', 
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-                                <Flex align="center" justify="space-between">
-                                    <div>
-                                        <Typography.Text type="secondary">Ventes Totales</Typography.Text>
-                                        <Typography.Title level={3} style={{ margin: '8px 0' }}>
-                                            {stats.totalVentes?.toLocaleString()} XAF
-                                        </Typography.Title>
-                                    </div>
-                                    <div style={{ 
-                                        background: '#1890ff',
-                                        padding: '12px',
-                                        borderRadius: '50%',
-                                        color: 'white'
-                                    }}>
-                                        <ShoppingOutlined style={{ fontSize: '24px' }} />
-                                    </div>
-                                </Flex>
-                            </div>
+                    {/* Stat cards */}
+                    <Row gutter={[16, 16]} className="stats-grid">
+                        <Col xs={24} sm={12} md={6}>
+                            <Card className="dashboard-card sales-card" bordered={false}>
+                                <Statistic title="Ventes Totales" value={stats.totalVentes?.toLocaleString() || 0} suffix="XAF" />
+                            </Card>
                         </Col>
-                        <Col span={6}>
-                            <div style={{ 
-                                background: '#fff7e6', 
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-                                <Flex align="center" justify="space-between">
-                                    <div>
-                                        <Typography.Text type="secondary">Stock Total</Typography.Text>
-                                        <Typography.Title level={3} style={{ margin: '8px 0' }}>
-                                            {stats.totalProduits} unités
-                                        </Typography.Title>
-                                    </div>
-                                    <div style={{ 
-                                        background: '#fa8c16',
-                                        padding: '12px',
-                                        borderRadius: '50%',
-                                        color: 'white'
-                                    }}>
-                                        <InboxOutlined style={{ fontSize: '24px' }} />
-                                    </div>
-                                </Flex>
-                            </div>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card className="dashboard-card inventory-card" bordered={false}>
+                                <Statistic title="Stock Total" value={stats.totalProduits || 0} />
+                            </Card>
                         </Col>
-                        <Col span={6}>
-                            <div style={{ 
-                                background: '#fff1f0', 
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-                                <Flex align="center" justify="space-between">
-                                    <div>
-                                        <Typography.Text type="secondary">Produits Critiques</Typography.Text>
-                                        <Typography.Title level={3} style={{ margin: '8px 0' }}>
-                                            {stats.produitsCritiques} produits
-                                        </Typography.Title>
-                                    </div>
-                                    <div style={{ 
-                                        background: '#ff4d4f',
-                                        padding: '12px',
-                                        borderRadius: '50%',
-                                        color: 'white'
-                                    }}>
-                                        <WarningOutlined style={{ fontSize: '24px' }} />
-                                    </div>
-                                </Flex>
-                            </div>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card className="dashboard-card critical-stock-card" bordered={false}>
+                                <Statistic title="Produits Critiques" value={stats.produitsCritiques || 0} />
+                            </Card>
                         </Col>
-                        <Col span={6}>
-                            <div style={{ 
-                                background: '#f6ffed', 
-                                padding: '20px',
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-                                <Flex align="center" justify="space-between">
-                                    <div>
-                                        <Typography.Text type="secondary">Mouvements du Mois</Typography.Text>
-                                        <Typography.Title level={3} style={{ margin: '8px 0' }}>
-                                            {stats.mouvementsMois}
-                                        </Typography.Title>
-                                    </div>
-                                    <div style={{ 
-                                        background: '#52c41a',
-                                        padding: '12px',
-                                        borderRadius: '50%',
-                                        color: 'white'
-                                    }}>
-                                        <SwapOutlined style={{ fontSize: '24px' }} />
-                                    </div>
-                                </Flex>
-                            </div>
-                        </Col>
-                    </Row> */}
+                        {/* Hide the movements card on very small screens to declutter */}
+                        {screens.sm && (
+                            <Col xs={24} sm={12} md={6}>
+                                <Card className="dashboard-card movements-card" bordered={false}>
+                                    <Statistic title="Mouvements du Mois" value={stats.mouvementsMois || 0} />
+                                </Card>
+                            </Col>
+                        )}
+                    </Row>
+
+                    <div className="table-responsive" style={{ marginTop: 20 }}>
 
                     <Modal
                         title={
@@ -490,72 +416,61 @@ export function Dashboard() {
                         </div>
                     </Modal>
 
+                    <ResponsiveTable
+                        table={table}
+                        renderTable={() => (
+                            <>
+                                <table id="myTable" className="table table-hover table-striped-columns align-middle responsive-table">
+                                    <caption>Derniers mouvements</caption>
+                                    <thead className="table-light">
+                                        {table.getHeaderGroups().map(headerGroup => (
+                                            <tr key={headerGroup.id}>
+                                                {headerGroup.headers.map(header => (
+                                                    <th key={header.id} style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} onClick={header.column.getToggleSortingHandler()}>
+                                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </thead>
+                                    <tbody>
+                                        {table.getRowModel().rows.map(row => (
+                                            <tr key={row.id}>{row.getVisibleCells().map(cell => <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>)}</tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div className="pagination-controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
+                                    <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
+                                    <span>Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
+                                </div>
+                            </>
+                        )}
+                    />
 
-                    <table id="myTable" className="table  table-hover table-striped-columns  align-middle">
-                        <thead className="table-light">
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <tr key={headerGroup.id}>
-                                    {headerGroup.headers.map(header => (
-                                        <th
-                                            key={header.id}
-                                            style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
-                                            onClick={header.column.getToggleSortingHandler()}
-                                        >
-                                            {flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                            {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-
-                            {table.getRowModel().rows.map(row => (
-                                <tr key={row.id}>
-                                    {row.getVisibleCells().map(cell => (
-                                        <td key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-
-                        </tbody>
-                    </table>
-                    <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
-                        <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
-                        <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
-                        <span>
-                            Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-                        </span>
-                    </div>
+                    </div> {/* .table-responsive */} 
                 </div>
 
                 <div className="addProduit" >
-                    {/* <Col span={10} style={{ background: '#f6f4ff', borderRadius: '10px', }}> */}
-                    {data?.labels?.length && data?.datasets?.length ? (
-                        <LineChart data={data} />
-                    ) : (
-                        <p>Chargement du graphique...</p>
-                    )}
-
-                    {/* </Col> */}
-
-
-
+                    <Card className="chart-card" bordered={false}>
+                        {data?.labels?.length && data?.datasets?.length ? (
+                            <LineChart data={data} compact={!screens.md} />
+                        ) : (
+                            <p>Chargement du graphique...</p>
+                        )}
+                    </Card>
                 </div>
             </div>
 
-            <div className="addProduit" style={{ width: '105%', marginTop: '20px', }}>
-                {/* <Col  style={{ background: '#f6f4ff', borderRadius: '0px', width: '100%' }}> */}
-                <LineChart data={data2} />
-                {/* </Col> */}
-
-
-            </div>
+            {/* Show second chart only on medium and larger screens to keep mobile clean */}
+            {screens.md && (
+                <div className="addProduit" style={{ marginTop: '20px' }}>
+                    <Card className="chart-card" bordered={false}>
+                        <LineChart data={data2} />
+                    </Card>
+                </div>
+            )}
 
 
         </ErrorBoundary>

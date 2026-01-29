@@ -1,73 +1,534 @@
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
 .dashboard-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 
-                0 2px 4px rgba(0, 0, 0, 0.03), 
-                0 4px 8px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
+    background: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-card:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 
-                0 4px 8px rgba(0, 0, 0, 0.05), 
-                0 8px 16px rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.ant-card-head-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1f1f1f;
+.ant-card-body {
+    flex-grow: 1;
 }
 
 .ant-statistic-title {
-    font-size: 14px;
     color: #8c8c8c;
+    font-size: 14px;
+    margin-bottom: 8px !important;
 }
 
 .ant-statistic-content {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 28px;
+    font-weight: 700;
 }
 
-.ant-progress {
+.dashboard-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
     margin-bottom: 8px;
 }
 
-.ant-badge-ribbon {
-    font-size: 12px;
-    height: 22px;
-    line-height: 22px;
+.stats-grid {
+    margin-bottom: 12px;
 }
 
-.ant-card.ant-card-small {
-    background: #fafafa;
+.dashboard-trend {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 12px;
 }
 
 .dashboard-trend-positive {
-    color: #3f8600;
+    color: #3f8600; /* Ant Design green */
 }
 
 .dashboard-trend-negative {
-    color: #cf1322;
+    color: #cf1322; /* Ant Design red */
 }
 
-/* Animation pour les progress bars */
-.ant-progress-bg {
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+/* Chart improvements */
+.chart-card {
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    min-height: 260px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.chart-card canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Tighten mobile card sizes */
+@media (max-width: 576px) {
+    .ant-statistic-content { font-size: 22px; }
+    .dashboard-card { padding: 12px; }
+    .chart-card { min-height: 200px; }
+}
+
+
+/* Specific Card Styles */
+.sales-card .ant-statistic-content {
+    color: #1890ff; /* Ant Design blue */
+}
+
+.inventory-card .ant-statistic-content {
+    color: #faad14; /* Ant Design gold */
+}
+
+.critical-stock-card .ant-statistic-content {
+    color: #f5222d; /* Ant Design red */
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-    .ant-card {
-        margin-bottom: 16px;
+@media (max-width: 576px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
     }
-    
-    .ant-statistic-title {
-        font-size: 12px;
-    }
-    
+
     .ant-statistic-content {
-        font-size: 20px;
+        font-size: 24px;
     }
+}
+
+/* Layout for dashboard page */
+.contentBody {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 992px) {
+    .contentBody {
+        grid-template-columns: 2fr 1fr;
+        align-items: start;
+    }
+}
+
+.produits, .addProduit {
+    padding: 12px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.responsive-table {
+    min-width: 720px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.responsive-table th, .responsive-table td {
+    padding: 10px 12px;
+}
+
+.stats-grid .dashboard-card {
+    padding: 16px;
+    border-radius: 10px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stats-grid .dashboard-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(15, 15, 15, 0.08);
+}
+
+.sales-card { background: linear-gradient(90deg, #e9f5ff 0%, #ffffff 100%); }
+.inventory-card { background: linear-gradient(90deg, #fffaf0 0%, #ffffff 100%); }
+.critical-stock-card { background: linear-gradient(90deg, #fff0f0 0%, #ffffff 100%); }
+.movements-card { background: linear-gradient(90deg, #f3fff0 0%, #ffffff 100%); }
+
+.chart-card {
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+@media (max-width: 576px) {
+    .contentBody { grid-template-columns: 1fr; }
+}
+
+
+/* Dashboard.css - Styles modernisés pour le tableau de bord */
+
+/* ============================================
+   LAYOUT GÉNÉRAL
+============================================ */
+.contentBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 0;
+}
+
+.produits {
+  width: 100%;
+}
+
+.addProduit {
+  width: 100%;
+}
+
+/* ============================================
+   CARDS DE STATISTIQUES
+============================================ */
+.stats-grid {
+  margin-bottom: 24px;
+}
+
+.dashboard-card {
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 2px dotted;
+  overflow: hidden;
+  position: relative;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Couleurs des cartes */
+.sales-card {
+  border-left-color: #1677ff;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
+}
+
+.inventory-card {
+  border-left-color: #52c41a;
+  background: linear-gradient(135deg, #ffffff 0%, #f6ffed 100%);
+}
+
+.critical-stock-card {
+  border-left-color: #ff4d4f;
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f0 100%);
+}
+
+.movements-card {
+  border-left-color: #722ed1;
+  background: linear-gradient(135deg, #ffffff 0%, #f9f0ff 100%);
+}
+
+/* Icônes de statistiques */
+.dashboard-card .ant-statistic-title {
+  color: #595959;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-card .ant-statistic-content {
+  color: #262626;
+  font-weight: 700;
+}
+
+.dashboard-card .ant-statistic-content-value {
+  font-size: 28px;
+}
+
+.dashboard-card .ant-statistic-content-suffix {
+  font-size: 16px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+
+/* ============================================
+   CARDS DE GRAPHIQUES
+============================================ */
+.chart-card {
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 
+              0 1px 6px -1px rgba(0, 0, 0, 0.02),
+              0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: #ffffff;
+  padding: 24px;
+}
+
+.chart-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.06),
+              0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================================
+   TABLE RESPONSIVE
+============================================ */
+.table-responsive {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.responsive-table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.responsive-table caption {
+  caption-side: top;
+  font-size: 18px;
+  font-weight: 700;
+  color: #262626;
+  padding: 0 0 16px 0;
+  text-align: left;
+}
+
+.responsive-table thead th {
+  background: #fafafa;
+  color: #262626;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 14px 16px;
+  border-bottom: 2px solid #f0f0f0;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.responsive-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.responsive-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.responsive-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #595959;
+  font-size: 14px;
+}
+
+.responsive-table .badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================
+   PAGINATION
+============================================ */
+.pagination-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.pagination-controls span {
+  color: #595959;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+============================================ */
+@media (max-width: 768px) {
+  .contentBody {
+    gap: 16px;
+  }
+
+  .stats-grid {
+    margin-bottom: 16px;
+  }
+
+  .dashboard-card {
+    border-radius: 8px;
+  }
+
+  .dashboard-card .ant-statistic-content-value {
+    font-size: 24px;
+  }
+
+  .chart-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .table-responsive {
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  .responsive-table {
+    font-size: 13px;
+  }
+
+  .responsive-table thead th {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .responsive-table tbody td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .responsive-table caption {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-card .ant-statistic-title {
+    font-size: 12px;
+  }
+
+  .dashboard-card .ant-statistic-content-value {
+    font-size: 20px;
+  }
+
+  .responsive-table thead th {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .responsive-table tbody td {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ============================================
+   ANIMATIONS ET MICRO-INTERACTIONS
+============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-card,
+.chart-card,
+.table-responsive {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Délai d'animation pour effet en cascade */
+.stats-grid > div:nth-child(1) { animation-delay: 0s; }
+.stats-grid > div:nth-child(2) { animation-delay: 0.05s; }
+.stats-grid > div:nth-child(3) { animation-delay: 0.1s; }
+.stats-grid > div:nth-child(4) { animation-delay: 0.15s; }
+
+/* ============================================
+   LOADING STATES
+============================================ */
+.chart-card .loading-state,
+.table-responsive .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+/* ============================================
+   MODAL ANALYSE IA
+============================================ */
+.ai-modal-content {
+  line-height: 1.8;
+  font-size: 14px;
+  color: #262626;
+}
+
+.ai-modal-content h3 {
+  color: #1677ff;
+  font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.ai-modal-content p {
+  margin-bottom: 12px;
+}
+
+.ai-modal-content ul {
+  margin-left: 20px;
+  margin-bottom: 16px;
+}
+
+.ai-modal-content li {
+  margin-bottom: 8px;
+}
+
+/* ============================================
+   UTILITY CLASSES
+============================================ */
+.text-center {
+  text-align: center;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.p-20 {
+  padding: 20px;
+}
+
+/* ============================================
+   DARK MODE SUPPORT (optionnel)
+============================================ */
+@media (prefers-color-scheme: dark) {
+  /* Vous pouvez ajouter des styles dark mode ici si nécessaire */
 }

@@ -15,9 +15,9 @@ const isTokenValid = (token) => {
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("accessToken");
 
-  if (!token || !isTokenValid(token)) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!token || !isTokenValid(token)) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
   // Si connecté, afficher la page demandée
   return children;

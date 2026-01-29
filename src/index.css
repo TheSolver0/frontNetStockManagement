@@ -1,325 +1,281 @@
-*,
-*::after,
-*::before
-{
-    box-sizing: inherit;
-    /* font-family: Arial, Helvetica, sans-serif; */
-    font: 1.05em sans-serif;
-    /* font-weight: 500; */
+/* Global Styles */
+:root {
+    --primary-color: #3d5af1;
+    --primary-hover-color: #304ffe;
+    --sider-bg-color: #001529;
+    --text-color: #333;
+    --text-color-light: #fff;
+    --body-bg-color: #f0f2f5;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-html, body {
-    height: 100%;
-    margin: 0;
-    scroll-behavior: smooth;
-    overflow: visible !important;
-    /* background:#ced4da !important; */
-}
-.demo-logo-vertical
-{
-    position: relative;
-    /* width: 200px; */
-    height: 50px;
-    /* background-color: aqua; */
-}
-/* .flexCardstat
-{
-    /* margin: 10px; *
-    margin-left: -10px;
-    width: 100%;
-    margin-top: 50px;
-    position: relative;
-    text-wrap: nowrap;
-    text-overflow: ellipsis;
-    /* padding: 24px; *
-} */
-.flexCardstat {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  margin-left: -40px;
-  margin-right: -72px;
-  position: relative;
-  /* width: ; */
 
-  /* gap: 1.5rem; */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--body-bg-color);
+    color: var(--text-color);
 }
-.ant-card
-{
-  padding-left: 2rem;
 
-    /* color: white; */
-    /* font-weight: 700;  */
-    cursor: pointer;
-    border-radius: 30px;
-    /* box-shadow: 4px 4px 8px black; */
-    width: 200px;
-    border: 1px solid #ededed;
-    margin: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
-    font-size: small;
-    overflow-x: hidden;
+/* Ant Design Overrides */
+.ant-layout {
+    background: var(--body-bg-color);
+}
 
+.ant-layout-sider {
+    background: var(--sider-bg-color) !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 }
-.ant-card:hover
-{
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-    transition: all 0.3s ease;
-}
-.ant-card-body
-{
-    padding: 10px;
-}
-.ant-card-head
-{
-    /* color: white !important; */
-    border-bottom: none !important;
-    font-weight: 550 !important;
-    font-family: Arial, Helvetica, sans-serif !important;
-}
-.ant-menu-title-content:hover
-{
-    /* color: white !important; */
-}
-table
-{
-    /* margin-top: 100px; */
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 100%;
-    table-layout: fixed ; /* force répartition égale des colonnes et évite le débordement */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-size: small;
-    /* position: relative; */
-}
-th, td
-{
-    text-align: center !important;
-    /* border: 1px solid gray; */
-    /* width: 10px !important; */
-    overflow: hidden;           /* cache le contenu trop long */
-    text-overflow: ellipsis;    /* … pour le texte tronqué */
-    white-space: nowrap;
-    
-}
-tbody
-{
-}
-th, thead
-{
-    background-color: #f6f4ff !important;
-    color: #bfb6ed;
-}
-h2
-{
-    color: rgb(0 21 41);
-}
-.dash
-{
-    overflow-y: scroll;
-    height: 100%;
-    padding: 20px;
-}
-.dash > *
-{
-    padding: 10px;
-}
-.ligne-critique {
-    background-color: #a71622; /* rouge clair */
-}
-.contentcentre
-{
-    /* background: #eceff1; */
-	display: flex;
-    flex-flow: column;
-	justify-content: center;
-	align-items: center;
-	min-height: 100vh;
-}
-.contentcentre > *
-{
-    padding: 20px;
-}
-.ant-layout-sider
-{
-    position: fixed;
-    z-index: 100;
-    background: #f6f4ff !important;
-    color:#09022b !important;
 
+.ant-menu-dark {
+    background: var(--sider-bg-color) !important;
 }
-.ant-menu
-{
-    background: #f6f4ff !important;
-    color: #09022b !important;
+
+.ant-menu-dark .ant-menu-item-selected {
+    background-color: var(--primary-color) !important;
 }
-.Header
-{
-    position: fixed;
-    z-index: 99;
-    width: 100vw;
-    color:#09022b !important;
-    background: white !important;
-    text-align: right;
+
+.ant-menu-dark .ant-menu-item:hover {
+    background-color: var(--primary-hover-color) !important;
 }
-.buttonHeader
-{
-    color:#09022b;
-    margin-left: 170px;
-    margin-top: 10px;
-    
+
+.ant-layout-header {
+    background: #fff !important;
+    border-bottom: 1px solid #f0f0f0;
 }
-.site-layout
-{
-    background: white !important;
+
+.ant-card {
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--box-shadow) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.Menu
-{
-    color: #09022b !important;
+
+.ant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
 }
-.Menu > *:hover, .ant-menu-item-selected 
-{
-    background: #8370fe !important;
-    color: white !important;
-    border-radius: 45px !important;
+
+.ant-card-head {
+    border-bottom: 1px solid #f0f0f0 !important;
 }
-.contentBody
-{
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  grid-gap: .5rem;
-  margin-left: -40px;
-  margin-right: -72px;
-  position: relative;
-}
-.produits
-{
-    border: 1px solid #ededed;
-    /* max-width: 100%; */
-    /* width: 738px; */
-    grid-column: span 2;
-    border-radius: 25px;
-    padding: 20px;
-    /* right: 10px;   */
-    /* left: 5px;   */
+
+/* Custom Styles */
+.logo-container {
     display: flex;
-    flex-flow: column;
-    align-items: flex-start;
-    position: relative;
-    box-sizing: border-box; /* pour que padding soit pris en compte */
-    overflow: hidden;    
-    /* position: relative; */
-}
-
-.addProduit
-{
-    border: 1px solid #ededed;
-    /* max-width: 100%; */
-    /* width: 350px; */
-    border-radius: 25px;
-    padding: 20px;
-    /* right: px; */
-    /* margin-right: -80px; */
-    /* margin-left: 12px; */
-    /* position: absolute; */
-
-}
-.boutonAddProduit
-{
-    padding: 22px;
-    border-radius: 30px;
-    background: #8370fe;
-    color: white;
-    border: 1px solid #8370fe;
-}
-
-
-/* AnalyticsPanel.css */
-.analytics-panel {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin: 20px 0;
-    border: 1px solid #e1e5e9;
-}
-
-.analytics-panel h3 {
-    color: #2d3748;
-    margin-bottom: 20px;
-    font-size: 1.4rem;
-}
-
-.analysis-controls {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-}
-
-.analysis-select {
-    padding: 10px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    background: white;
-    font-size: 14px;
-    min-width: 200px;
-}
-
-.analyze-btn {
-    padding: 10px 24px;
-    background: #4299e1;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.3s;
-}
-
-.analyze-btn:hover:not(:disabled) {
-    background: #3182ce;
-}
-
-.analyze-btn:disabled {
-    background: #a0aec0;
-    cursor: not-allowed;
-}
-
-.analysis-results {
-    background: #f7fafc;
-    border-radius: 8px;
     padding: 16px;
-    border-left: 4px solid #4299e1;
+    transition: padding 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-.analysis-results h4 {
-    color: #2d3748;
-    margin-bottom: 12px;
+.logo-container img {
+    transition: width 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-.analysis-content {
-    line-height: 1.6;
-    color: #4a5568;
+.ant-layout-sider-collapsed .logo-container {
+    padding: 16px 8px;
 }
 
-.analysis-content p {
-    margin: 8px 0;
+.ant-layout-sider-collapsed .logo-container img {
+    width: 40px !important;
 }
 
-.error-message {
-    background: #fed7d7;
-    color: #c53030;
-    padding: 12px;
+.stat-card-icon {
+    font-size: 32px;
+    padding: 16px;
+    border-radius: 50%;
+    color: var(--text-color-light);
+}
+
+.ligne-critique {
+    background-color: #ffccc7 !important; /* Lighter red for critical rows */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .ant-layout-header {
+        padding: 0 16px !important;
+    }
+
+    .ant-space-item:nth-child(2) { /* Hides username on small screens */
+        display: none;
+    }
+}
+
+/* Mobile & small screens */
+.mobile-drawer .ant-menu-item {
+    padding: 14px 20px !important;
+    font-size: 16px !important;
+    height: auto !important;
+}
+
+/* Slightly smaller fonts on very small devices */
+@media (max-width: 480px) {
+    body { font-size: 14px; }
+    .ant-btn { padding: 6px 10px; }
+    .ant-menu-item { padding: 10px 12px; }
+    .logo-container img { width: 60px !important; }
+    .username-text { display: none; }
+    .ant-layout-sider { display: none; }
+}
+
+/* Make header sticky and larger z-index for mobile */
+.ant-layout-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+/* Increase touch target sizes */
+.ant-menu-item, .ant-btn {
+    touch-action: manipulation;
+}
+
+/* Unified theme variables and component styles (light-only design) */
+:root {
+    --primary-color: #1652f0; /* main blue */
+    --primary-hover-color: #0f49e0;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --muted: #6b7280;
+    --sider-bg-color: #ffffff;
+    --body-bg-color: #f6f8fb;
+    --card-bg: #ffffff;
+    --card-shadow: 0 6px 18px rgba(2,6,23,0.06);
+    --border-radius: 10px;
+    --text-color: #0f1724;
+    --text-color-light: #ffffff;
+    --box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* Layout components */
+.ant-layout {
+    background: var(--body-bg-color);
+}
+
+.ant-layout-sider {
+    background: var(--sider-bg-color) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+
+.ant-layout-header {
+    background: rgba(255,255,255,0.95) !important;
+    border-bottom: 1px solid rgba(15,23,42,0.06);
+}
+
+.ant-card {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: var(--border-radius) !important;
+}
+
+/* Menu selection and hover for light menu */
+.ant-menu-light .ant-menu-item-selected {
+    background-color: rgba(22,82,240,0.08) !important;
+    color: var(--primary-color) !important;
+}
+.ant-menu-light .ant-menu-item:hover {
+    background-color: rgba(22,82,240,0.06) !important;
+}
+
+/* Buttons and inputs */
+.ant-btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.ant-btn-primary:hover, .ant-btn-primary:focus {
+    background: var(--primary-hover-color);
+    border-color: var(--primary-hover-color);
+}
+
+/* Smooth transitions */
+* {
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+/* Typo & spacing */
+body { font-family: Inter, Roboto, 'Helvetica Neue', Arial, sans-serif; }
+h1, h2, h3, h4 { color: var(--text-color); }
+
+/* Enhanced responsive helpers */
+@media (max-width: 768px) {
+    .ant-layout-header { padding: 0 12px !important; }
+    .logo-container img { width: 60px !important; }
+}
+
+@media (max-width: 480px) {
+    body { font-size: 14px; }
+    .ant-btn { padding: 8px 12px; }
+    .ant-menu-item { padding: 12px 14px; }
+    .logo-container img { width: 56px !important; }
+}
+
+/* Keep table helpers unchanged */
+
+/* Global responsive table helpers */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 8px;
-    margin: 12px 0;
+    background: #fff;
+    padding: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
 }
+
+.responsive-table {
+    min-width: 680px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.responsive-table th, .responsive-table td {
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .responsive-table th, .responsive-table td { padding: 8px; font-size: 14px; }
+}
+
+/* Full-width form controls on small screens */
+@media (max-width: 480px) {
+    .ant-input, .ant-select, .ant-input-number, .ant-btn, .ant-picker { width: 100% !important; }
+    .pagination-controls { flex-direction: column; align-items: stretch; }
+    .pagination-controls .ant-btn { width: 100%; }
+}
+
+/* Polished components */
+.badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(22,82,240,0.03);
+}
+
+.ant-input, .ant-select-selector, .ant-input-number {
+    border-radius: 8px;
+}
+
+/* Responsive cards for mobile tables */
+.responsive-cards { display:flex; flex-direction:column; gap:12px; }
+.mobile-card { border-radius: 10px; box-shadow: var(--box-shadow); cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.mobile-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(15,15,15,0.06); }
+.mobile-card .ant-card-body { padding: 12px; }
+.mobile-card .card-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.04); }
+.mobile-card .card-row:last-child { border-bottom: none; }
+
+/* Main container center + responsive */
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Utility spacing */
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }

@@ -54,7 +54,8 @@ export const useOpenRouterAnalytics = () => {
 
         // Modèles gratuits sur OpenRouter
         const freeModels = [
-            "openrouter/andromeda-alpha",
+            "arcee-ai/trinity-large-preview:free",
+            // "openrouter/andromeda-alpha",
             /*"google/gemini-pro", // Gratuit
             "meta-llama/llama-3-8b-instruct", // Gratuit
             "microsoft/wizardlm-2-8x22b", // Gratuit
