@@ -48,7 +48,7 @@ import {
 } from '@tanstack/react-table';
 import { getCommandesClient, getProduits, getClients, API_URL } from "../services/api";
 import axiosInstance from '../services/axiosInstance';
-import { useCommandesReducer } from '../hooks/useCommandesReducer';
+import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
 
 // Modal pour ajouter une commande
 const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {

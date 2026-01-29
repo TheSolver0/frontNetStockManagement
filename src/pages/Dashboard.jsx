@@ -5,7 +5,7 @@ import LineChart from './Line';
 import ErrorBoundary from './ErrorBoundary';
 import { Button, Layout, Row, Col, theme, Flex, Typography, Modal, Spin, Card, Statistic, Grid } from 'antd';
 import { useAnalyticsAI } from '../hooks/useAnalyticsAI';
-import { useOpenRouterAnalytics } from '../hooks/useOpenRouterAnalytics';
+import { useOpenRouterAnalytics } from '../hooks/useOpenRouterAnalytics.js';
 import {
     MinusSquareFilled,
     PlusSquareOutlined,

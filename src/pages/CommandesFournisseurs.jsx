@@ -51,7 +51,7 @@ import {
 } from '@tanstack/react-table';
 import { getCommandesFournisseur, getProduits, getFournisseurs, API_URL } from "../services/api";
 import axiosInstance from '../services/axiosInstance';
-import { useCommandesReducerF } from '../hooks/useCommandesReducerF';
+import { useCommandesReducerF } from '../hooks/useCommandesReducerF.js';
 
 // Modal pour ajouter une commande fournisseur
 const AddSupplierOrderForm = ({ open, onCancel, onOrderAdded }) => {
