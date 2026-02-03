@@ -46,7 +46,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { getCommandesClient, getProduits, getClients, API_URL } from "../services/api";
+import { getCommandesClient, getProduits, getClients, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
 

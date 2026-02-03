@@ -36,7 +36,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { getMouvements, getProduits, getClients, getFournisseurs } from "../services/api";
+import { getMouvements, getProduits, getClients, getFournisseurs } from "../services/api.js";
 
 export function Transactions() {
   const [mouvements, setMouvements] = useState([]);

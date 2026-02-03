@@ -10,7 +10,7 @@ import {
     getPaginationRowModel,
     flexRender,
 } from '@tanstack/react-table';
-import { getProduits, getCategories, API_URL } from "../services/api";
+import { getProduits, getCategories, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 
 const AddProductForm = ({ open, onCancel, onProductAdded }) => {

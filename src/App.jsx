@@ -31,10 +31,14 @@ import { EditFournisseur } from './pages/EditFournisseur';
 import { EditCommandeClient } from './pages/EditCommandeClient';
 import { EditCommandeFournisseur } from './pages/EditCommandeFournisseur';
 import { Parametres } from './pages/Parametres';
-import { getMouvements, getCommandesClient, getCommandesFournisseur, getProduits } from "./services/api";
+import { getMouvements, getCommandesClient, getCommandesFournisseur, getProduits } from "./services/api.js";
 import Login from './pages/Login';
 import axiosInstance from './services/axiosInstance';
 import PrivateRoute from './components/PrivateRoute';
+import CreateInventory from './pages/CreateInventory';
+import InventoryList from './pages/InventoryList';
+import InventoryCount from './pages/InventoryCount';
+import InventoryDetails from './pages/InventoryDetails';
 
 
 const { Header, Sider, Content } = Layout;
@@ -58,7 +62,10 @@ const App = () => (
         { path: '/commandefournisseurs/:id', element: <EditCommandeFournisseur /> },
         { path: '/commandesclients', element: <CommandesClients /> },
         { path: '/commandeclients/:id', element: <EditCommandeClient /> },
-        { path: '/parametres', element: <Parametres /> },
+        { path: '/inventory', element: <InventoryList /> },
+        { path: '/inventory/new', element: <CreateInventory /> },
+        { path: '/inventory/:sessionId/count', element: <InventoryCount /> },
+        { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
       ],
     }
   ])} />
@@ -140,6 +147,10 @@ function Root() {
         { key: '/commandesclients', label: <NavLink to="/commandesclients">Clients</NavLink> },
       ],
     },
+    { key: '/inventory', icon: <SwapOutlined />, label: <NavLink to="/inventory">Inventaires</NavLink> },
+    // { key: '/inventory/new', icon: <SettingOutlined />, label: <NavLink to="/inventory/new">Nouvel Inventaire</NavLink> },
+    // { key: '/inventory/:sessionId/count', icon: <SettingOutlined />, label: <NavLink to="/inventory/:sessionId/count">Comptage Inventaire</NavLink> },
+
     ...(user?.is_superuser ? [{ key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> }] : []),
   ];
 
@@ -148,7 +159,7 @@ function Root() {
       {screens.lg ? (
         <Sider trigger={null} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" collapsedWidth="80">
           <div className="logo-container">
-            <img src="/web-programming.png" alt="Logo" style={{ width: collapsed ? '40px' : '80px' }} />
+            <img src="/logoKFTech.jpg" alt="Logo" style={{ width: collapsed ? '40px' : '80px' }} />
           </div>
           <Menu theme="light" mode="inline" selectedKeys={[location.pathname]} items={menuItems} />
         </Sider>

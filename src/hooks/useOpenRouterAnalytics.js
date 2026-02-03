@@ -43,7 +43,7 @@ export const useOpenRouterAnalytics = () => {
     };
 
     const callOpenRouterWithFallback = async (data) => {
-        const API_KEY = "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";
+        const API_KEY = "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";
         // const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
         
         if (!API_KEY) {
@@ -54,8 +54,9 @@ export const useOpenRouterAnalytics = () => {
 
         // Modèles gratuits sur OpenRouter
         const freeModels = [
+            "deepseek/deepseek-r1-0528:free",
             "arcee-ai/trinity-large-preview:free",
-            // "openrouter/andromeda-alpha",
+            "openrouter/andromeda-alpha",
             /*"google/gemini-pro", // Gratuit
             "meta-llama/llama-3-8b-instruct", // Gratuit
             "microsoft/wizardlm-2-8x22b", // Gratuit

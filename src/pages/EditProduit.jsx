@@ -1,10 +1,10 @@
-import React, { useState, useEffect, } from 'react';
+    import React, { useState, useEffect, } from 'react';
 import { useParams, useLocation } from "react-router-dom";
 import '@ant-design/v5-patch-for-react-19';
 import { Button, Layout, Menu, theme, Card, Col, Row, Flex, Form, Input, InputNumber, Modal, Select, Popconfirm, message, Switch, Descriptions, Tag, Space } from 'antd';
 
-import { getProduit, API_URL } from "../services/api";
-import { getCategories } from "../services/api";
+import { getProduit, API_URL } from "../services/api.js";
+import { getCategories } from "../services/api.js";
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 
 import axios from "axios";

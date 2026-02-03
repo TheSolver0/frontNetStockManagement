@@ -40,7 +40,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { getFournisseurs, getProduits, API_URL } from "../services/api";
+import { getFournisseurs, getProduits, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 
 // Modal pour ajouter un fournisseur

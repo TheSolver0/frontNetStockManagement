@@ -3,7 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import '@ant-design/v5-patch-for-react-19';
 import { Button, Layout, Menu, theme, Card, Col, Row, Flex, Form, Input, InputNumber, Modal, Select, Popconfirm, message, Switch, Descriptions, Tag, Space } from 'antd';
 
-import { getFournisseur, getProduits, API_URL } from "../services/api";
+import { getFournisseur, getProduits, API_URL } from "../services/api.js";
 import { EditOutlined, EyeOutlined, UserOutlined, MailOutlined, PhoneOutlined, HomeOutlined, ShoppingOutlined } from '@ant-design/icons';
 
 import axios from "axios";

@@ -33,7 +33,7 @@ import DataTable from 'datatables.net-dt';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import ResponsiveTable from '../components/ResponsiveTable';
 
-import { getMouvements, getCommandesClient, getProduits, getClients, getFournisseurs } from "../services/api";
+import { getMouvements, getCommandesClient, getProduits, getClients, getFournisseurs } from "../services/api.js";
 
 const token = localStorage.getItem('accessToken');
 const head = {

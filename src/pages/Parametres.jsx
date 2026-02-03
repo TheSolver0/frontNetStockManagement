@@ -14,8 +14,8 @@ import {
 } from '@ant-design/icons';
 import ResponsiveTable from '../components/ResponsiveTable';
 import DataTable from 'datatables.net-dt';
-import { getProduits, getUsers } from "../services/api";
-import { getCategories } from "../services/api";
+import { getProduits, getUsers } from "../services/api.js";
+import { getCategories } from "../services/api.js";
 
 import {
     useReactTable,
