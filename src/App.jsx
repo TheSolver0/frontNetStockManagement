@@ -159,7 +159,7 @@ function Root() {
       {screens.lg ? (
         <Sider trigger={null} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" collapsedWidth="80">
           <div className="logo-container">
-            <img src="/logoKFTech.jpg" alt="Logo" style={{ width: collapsed ? '40px' : '80px' }} />
+            <img src="/logo.jpg" alt="Logo" style={{ width: collapsed ? '40px' : '80px' }} />
           </div>
           <Menu theme="light" mode="inline" selectedKeys={[location.pathname]} items={menuItems} />
         </Sider>

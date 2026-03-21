@@ -206,9 +206,11 @@
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-left: 2px dotted;
   overflow: hidden;
   position: relative;
+  height: 100px;
+  padding: 0px !important;
+  border-top: 2px solid;
 }
 
 .dashboard-card:hover {
@@ -218,22 +220,22 @@
 
 /* Couleurs des cartes */
 .sales-card {
-  border-left-color: #1677ff;
+  border-color: #1677ff;
   background: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
 }
 
 .inventory-card {
-  border-left-color: #52c41a;
+  border-color: #52c41a;
   background: linear-gradient(135deg, #ffffff 0%, #f6ffed 100%);
 }
 
 .critical-stock-card {
-  border-left-color: #ff4d4f;
+  border-color: #ff4d4f;
   background: linear-gradient(135deg, #ffffff 0%, #fff1f0 100%);
 }
 
 .movements-card {
-  border-left-color: #722ed1;
+  border-color: #722ed1;
   background: linear-gradient(135deg, #ffffff 0%, #f9f0ff 100%);
 }
 
@@ -241,7 +243,7 @@
 .dashboard-card .ant-statistic-title {
   color: #595959;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -257,7 +259,7 @@
 }
 
 .dashboard-card .ant-statistic-content-suffix {
-  font-size: 16px;
+  font-size: 12px;
   color: #8c8c8c;
   font-weight: 500;
 }
@@ -531,4 +533,9 @@
 ============================================ */
 @media (prefers-color-scheme: dark) {
   /* Vous pouvez ajouter des styles dark mode ici si nécessaire */
+}
+
+a
+{
+  text-decoration: none;
 }
