@@ -325,24 +325,24 @@ export function Dashboard() {
                     {/* Stat cards */}
                     <Row gutter={[16, 16]} className="stats-grid">
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card sales-card" outlined={false}>
+                            <Card className="dashboard-card sales-card" variant="outlined">
                                 <Statistic title="Ventes Totales" value={stats.totalVentes?.toLocaleString() || 0} suffix="XAF" />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card inventory-card" outlined={false}>
+                            <Card className="dashboard-card inventory-card" variant="outlined">
                                 <Statistic title="Stock Total" value={stats.totalProduits || 0} />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card critical-stock-card" outlined={false}>
+                            <Card className="dashboard-card critical-stock-card" variant="outlined">
                                 <Statistic title="Produits Critiques" value={stats.produitsCritiques || 0} />
                             </Card>
                         </Col>
                         {/* Hide the movements card on very small screens to declutter */}
                         {screens.sm && (
                             <Col xs={24} sm={12} md={6}>
-                                <Card className="dashboard-card movements-card" outlined={false}>
+                                <Card className="dashboard-card movements-card" variant="outlined">
                                     <Statistic title="Mouvements du Mois" value={stats.mouvementsMois || 0} />
                                 </Card>
                             </Col>
@@ -441,7 +441,7 @@ export function Dashboard() {
                 </div>
 
                 <div className="addProduit" >
-                    <Card className="chart-card" outlined={false}>
+                    <Card className="chart-card" variant="outlined">
                         {data?.labels?.length && data?.datasets?.length ? (
                             <LineChart data={data} compact={!screens.md} />
                         ) : (
@@ -454,7 +454,7 @@ export function Dashboard() {
             {/* Show second chart only on medium and larger screens to keep mobile clean */}
             {screens.md && (
                 <div className="addProduit" style={{ marginTop: '20px' }}>
-                    <Card className="chart-card" outlined={false}>
+                    <Card className="chart-card" variant="outlined">
                         <LineChart data={data2} />
                     </Card>
                 </div>

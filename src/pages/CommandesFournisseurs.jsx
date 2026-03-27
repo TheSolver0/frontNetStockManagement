@@ -482,7 +482,7 @@ export function CommandesFournisseurs() {
         {/* Statistiques */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #1677ff',
               background: 'linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%)'
             }}>
@@ -495,7 +495,7 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #faad14',
               background: 'linear-gradient(135deg, #ffffff 0%, #fffbe6 100%)'
             }}>
@@ -509,7 +509,7 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #ff4d4f',
               background: 'linear-gradient(135deg, #ffffff 0%, #fff1f0 100%)'
             }}>
@@ -523,7 +523,7 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #52c41a',
               background: 'linear-gradient(135deg, #ffffff 0%, #f6ffed 100%)'
             }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { NavLink } from "react-router-dom";
 import { 
   Button, 
@@ -19,7 +19,8 @@ import {
   Tag,
   Row,
   Col,
-  Statistic
+  Statistic,
+  
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -36,7 +37,8 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined
+  SyncOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import {
   useReactTable,
@@ -49,13 +51,18 @@ import {
 import { getCommandesClient, getProduits, getClients, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Modal pour ajouter une commande
 const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
-  const [form] = Form.useForm();
+   const [form] = Form.useForm();
+  const [clientForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [produits, setProduits] = useState([]);
   const [clients, setClients] = useState([]);
+  const [addClientVisible, setAddClientVisible] = useState(false);
+  const [addingClient, setAddingClient] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -63,10 +70,28 @@ const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
         .then(([produitsData, clientsData]) => {
           setProduits(produitsData);
           setClients(clientsData);
-        })
-        .catch(error => console.error("Erreur lors du chargement des données :", error));
+        });
     }
   }, [open]);
+  const handleAddClient = async (values) => {
+    setAddingClient(true);
+    try {
+      const response = await axiosInstance.post(`${API_URL}Customers/`, {
+        ...values,
+        telephone: parseInt(values.telephone, 10),
+      });
+      const newClient = response.data;
+      setClients(prev => [...prev, newClient]);
+      form.setFieldsValue({ customerId: newClient.id });
+      message.success(`Client "${newClient.name}" créé et sélectionné !`);
+      setAddClientVisible(false);
+      clientForm.resetFields();
+    } catch (error) {
+      message.error("Erreur lors de la création du client !");
+    } finally {
+      setAddingClient(false);
+    }
+  };
 
   const handleFinish = async (values) => {
     setLoading(true);
@@ -89,79 +114,94 @@ const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
     }
   };
 
-  return (
-    <Modal
-      title="Ajouter une nouvelle commande"
-      open={open}
-      onCancel={onCancel}
-      footer={null}
-      confirmLoading={loading}
-    >
-      <Form form={form} layout="vertical" onFinish={handleFinish} name="addOrderForm">
-        <Form.Item 
-          name="productId" 
-          label="Produit" 
-          rules={[{ required: true, message: 'Veuillez sélectionner un produit' }]}
-        >
-          <Select 
-            placeholder="Sélectionnez un produit"
-            showSearch
-            filterOption={(input, option) =>
-              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          >
-            {produits.map((produit) => (
-              <Select.Option key={produit.id} value={produit.id}>
-                {produit.name} - {produit.price?.toLocaleString('fr-FR')} XAF
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+ return (
+    <>
+      <Modal title="Ajouter une nouvelle commande" open={open} onCancel={onCancel} footer={null}>
+        <Form form={form} layout="vertical" onFinish={handleFinish}>
 
-        <Form.Item 
-          name="quantity" 
-          label="Quantité" 
-          rules={[
-            { required: true, message: 'Veuillez entrer la quantité' },
-            { type: 'number', min: 1, message: 'La quantité doit être au moins 1' }
-          ]}
-        >
-          <InputNumber 
-            min={1} 
-            style={{ width: '100%' }} 
-            placeholder="Ex: 5"
-          />
-        </Form.Item>
+          <Form.Item name="productId" label="Produit" rules={[{ required: true }]}>
+            <Select placeholder="Sélectionnez un produit" showSearch
+              filterOption={(input, option) =>
+                (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {produits.map(p => (
+                <Select.Option key={p.id} value={p.id}>
+                  {p.name} - {p.price?.toLocaleString('fr-FR')} XAF
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-        <Form.Item 
-          name="customerId" 
-          label="Client" 
-          rules={[{ required: true, message: 'Veuillez sélectionner un client' }]}
-        >
-          <Select 
-            placeholder="Sélectionnez un client"
-            showSearch
-            filterOption={(input, option) =>
-              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          >
-            {clients.map((client) => (
-              <Select.Option key={client.id} value={client.id}>
-                {client.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+          <Form.Item name="quantity" label="Quantité" rules={[{ required: true, type: 'number', min: 1 }]}>
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading} block>
-            Ajouter la commande
-          </Button>
-        </Form.Item>
-      </Form>
-    </Modal>
+          <Form.Item label="Client">
+            <Input.Group compact>
+              <Form.Item name="customerId" noStyle rules={[{ required: true, message: 'Sélectionnez un client' }]}>
+                <Select placeholder="Sélectionnez un client" showSearch style={{ width: 'calc(100% - 120px)' }}
+                  filterOption={(input, option) =>
+                    (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {clients.map(c => (
+                    <Select.Option key={c.id} value={c.id}>{c.name}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Button 
+                icon={<PlusOutlined />} 
+                onClick={() => setAddClientVisible(true)}
+                style={{ width: 120 }}
+              >
+                Nouveau
+              </Button>
+            </Input.Group>
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading} block>
+              Ajouter la commande
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal création client rapide */}
+      <Modal
+        title="Nouveau client"
+        open={addClientVisible}
+        onCancel={() => { setAddClientVisible(false); clientForm.resetFields(); }}
+        footer={null}
+        width={400}
+      >
+        <Form form={clientForm} layout="vertical" onFinish={handleAddClient}>
+          <Form.Item name="name" label="Nom complet" rules={[{ required: true }]}>
+            <Input placeholder="Jean Dupont" />
+          </Form.Item>
+          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+            <Input placeholder="jean@email.com" />
+          </Form.Item>
+          <Form.Item name="address" label="Adresse" rules={[{ required: true }]}>
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item name="telephone" label="Téléphone" rules={[{ required: true, type: 'number', min: 0 }]}>
+            <InputNumber style={{ width: '100%' }} placeholder="237699123456" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={addingClient} block>
+              Créer et sélectionner
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
+
+
+
 
 export function CommandesClients() {
   const [commandes, setCommandes] = useState([]);
@@ -193,146 +233,222 @@ export function CommandesClients() {
 
   useCommandesReducer(commandes);
 
-  const handleDelete = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_URL}Orders/${id}/`);
-      message.success('Commande supprimée avec succès');
-      setTimeout(() => {
-        setCommandes(prev => prev.filter(c => c.id !== id));
-      }, 1000);
-    } catch (error) {
-      message.error("Erreur lors de la suppression de la commande !");
-      console.error('Erreur lors de la suppression', error);
-    }
-  };
+  const handleDelete = useCallback(async (id) => {
+  try {
+    await axiosInstance.delete(`${API_URL}Orders/${id}/`);
+    message.success('Commande supprimée avec succès');
+    setTimeout(() => {
+      setCommandes(prev => prev.filter(c => c.id !== id));
+    }, 1000);
+  } catch (error) {
+    message.error("Erreur lors de la suppression de la commande !");
+  }
+}, []);
+
 
   // Fonction pour obtenir la config du statut
-  const getStatusConfig = (status) => {
-    const configs = {
-      'EN_ATTENTE': { color: 'orange', icon: <ClockCircleOutlined />, label: 'En attente' },
-      'PREPAREE': { color: 'blue', icon: <SyncOutlined />, label: 'Préparée' },
-      'EXPEDIEE': { color: 'cyan', icon: <SyncOutlined spin />, label: 'Expédiée' },
-      'LIVREE': { color: 'green', icon: <CheckCircleOutlined />, label: 'Livrée' },
-      'ANNULEE': { color: 'red', icon: <CloseCircleOutlined />, label: 'Annulée' }
-    };
-    return configs[status] || { color: 'default', icon: null, label: status };
+  const getStatusConfig = useCallback((status) => {
+  const configs = {
+    'EN_ATTENTE': { color: 'orange', icon: <ClockCircleOutlined />, label: 'En attente' },
+    'PREPAREE':   { color: 'blue',   icon: <SyncOutlined />,        label: 'Préparée' },
+    'EXPEDIEE':   { color: 'cyan',   icon: <SyncOutlined spin />,   label: 'Expédiée' },
+    'LIVREE':     { color: 'green',  icon: <CheckCircleOutlined />, label: 'Livrée' },
+    'ANNULEE':    { color: 'red',    icon: <CloseCircleOutlined />, label: 'Annulée' }
   };
+  return configs[status] || { color: 'default', icon: null, label: status };
+}, []);
 
   // Calcul des statistiques
-  const calculateStats = () => {
-    const enAttente = commandes.filter(c => c.status === 'EN_ATTENTE').length;
-    const livrees = commandes.filter(c => c.status === 'LIVREE').length;
-    const totalMontant = commandes
-      .filter(c => c.status === 'LIVREE')
-      .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
-    
-    return {
-      total: commandes.length,
-      enAttente,
-      livrees,
-      totalMontant
-    };
-  };
+  const stats = useMemo(() => {
+  const enAttente   = commandes.filter(c => c.status === 'EN_ATTENTE').length;
+  const livrees     = commandes.filter(c => c.status === 'LIVREE').length;
+  const totalMontant = commandes
+    .filter(c => c.status === 'LIVREE')
+    .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+  return { total: commandes.length, enAttente, livrees, totalMontant };
+}, [commandes]);
 
-  const stats = calculateStats();
+const downloadInvoicePDF = useCallback((order) => {
+  const doc = new jsPDF();
+  const config = getStatusConfig(order.status);
+  const dateStr = new Date().toLocaleDateString('fr-FR', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── En-tête ──────────────────────────────────────────
+  doc.setFillColor(22, 119, 255);
+  doc.rect(0, 0, 210, 35, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FACTURE', 14, 22);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`N° ${order.id}`, 140, 15);
+  doc.text(`Date : ${dateStr}`, 140, 22);
+
+  // Statut
+  doc.setFontSize(10);
+  doc.text(`Statut : ${config.label}`, 140, 29);
+
+  // ── Infos client ─────────────────────────────────────
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Facturé à :', 14, 48);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(order.customer?.name || '-', 14, 56);
+  if (order.customer?.email) doc.text(order.customer.email, 14, 63);
+  if (order.customer?.telephone) doc.text(`Tél : ${order.customer.telephone}`, 14, 70);
+  if (order.customer?.address) {
+    const addrLines = doc.splitTextToSize(order.customer.address, 80);
+    doc.text(addrLines, 14, 77);
+  }
+
+  // ── Tableau des articles ──────────────────────────────
+  autoTable(doc, {
+    startY: 95,
+    head: [['Désignation', 'Quantité', 'Prix unitaire (XAF)', 'Montant total (XAF)']],
+    body: [[
+      order.product?.name || '-',
+      order.quantity,
+      parseFloat(order.product?.price || 0).toLocaleString('fr-FR'),
+      parseFloat(order.amount || 0).toLocaleString('fr-FR'),
+    ]],
+    headStyles: {
+      fillColor: [22, 119, 255],
+      textColor: 255,
+      fontStyle: 'bold',
+      fontSize: 11,
+    },
+    bodyStyles: { fontSize: 11 },
+    alternateRowStyles: { fillColor: [240, 245, 255] },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { halign: 'center' },
+      2: { halign: 'right' },
+      3: { halign: 'right', fontStyle: 'bold' },
+    },
+    margin: { left: 14, right: 14 },
+  });
+
+  // ── Total ─────────────────────────────────────────────
+  const finalY = doc.lastAutoTable.finalY + 10;
+
+  doc.setDrawColor(22, 119, 255);
+  doc.setLineWidth(0.5);
+  doc.line(120, finalY, 196, finalY);
+
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(22, 119, 255);
+  doc.text('TOTAL :', 125, finalY + 9);
+  doc.text(
+    `${parseFloat(order.amount || 0).toLocaleString('fr-FR')} XAF`,
+    196, finalY + 9,
+    { align: 'right' }
+  );
+
+  // ── Pied de page ─────────────────────────────────────
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(150, 150, 150);
+  doc.text('Merci pour votre commande.', 105, 285, { align: 'center' });
+  doc.line(14, 280, 196, 280);
+
+  // ── Téléchargement ───────────────────────────────────
+  doc.save(`facture-commande-${order.id}.pdf`);
+}, [getStatusConfig]);
 
   // Colonnes pour React Table
-  const columnsRT = [
-    { 
-      header: 'ID', 
-      accessorKey: 'id',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 600, color: '#8c8c8c' }}>#{row.original.id}</span>
-      )
-    },
-    {
-      header: 'Produit',
-      accessorKey: 'product.name',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 600 }}>
-          <AppstoreOutlined style={{ marginRight: 4, color: '#1677ff' }} />
-          {row.original.product?.name || '-'}
-        </span>
-      )
-    },
-    { 
-      header: 'Quantité', 
-      accessorKey: 'quantity',
-      cell: ({ row }) => (
-        <Tag color="blue">
-          <NumberOutlined /> {row.original.quantity}
-        </Tag>
-      )
-    },
-    {
-      header: 'Client',
-      accessorKey: 'customer.name',
-      cell: ({ row }) => (
-        <span>
-          <UserOutlined style={{ marginRight: 4, color: '#52c41a' }} />
-          {row.original.customer?.name || '-'}
-        </span>
-      )
-    },
-    { 
-      header: 'Prix Unitaire', 
-      accessorKey: 'product.price',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 500 }}>
-          {row.original.product?.price?.toLocaleString('fr-FR')} XAF
-        </span>
-      )
-    },
-    { 
-      header: 'Montant Total', 
-      accessorKey: 'amount',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 700, color: '#1677ff', fontSize: '14px' }}>
-          {parseFloat(row.original.amount || 0).toLocaleString('fr-FR')} XAF
-        </span>
-      )
-    },
-    {
-      header: 'Statut',
-      accessorKey: 'status',
-      cell: ({ row }) => {
-        const config = getStatusConfig(row.original.status);
-        return (
-          <Tag color={config.color} icon={config.icon} style={{ fontWeight: 600 }}>
-            {config.label}
-          </Tag>
-        );
-      }
-    },
-    {
-      header: 'Actions',
-      id: 'actions',
-      cell: ({ row }) => (
-        <Space size="middle">
-          <NavLink to={`/commandeclients/${row.original.id}`}>
-            <Button type="primary" icon={<EditOutlined />} shape="circle" />
-          </NavLink>
-          <Popconfirm
-            title="Confirmer la suppression"
-            description="Êtes-vous sûr de vouloir supprimer cette commande ?"
-            onConfirm={() => handleDelete(row.original.id)}
-            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-            okText="Oui"
-            cancelText="Non"
-          >
-            <Button type="danger" icon={<DeleteOutlined />} shape="circle" />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const columnsRT = useMemo(() => [
+  { 
+    header: 'ID', accessorKey: 'id',
+    cell: ({ row }) => <span style={{ fontWeight: 600, color: '#8c8c8c' }}>#{row.original.id}</span>
+  },
+  {
+    header: 'Produit', accessorKey: 'product.name',
+    cell: ({ row }) => (
+      <span style={{ fontWeight: 600 }}>
+        <AppstoreOutlined style={{ marginRight: 4, color: '#1677ff' }} />
+        {row.original.product?.name || '-'}
+      </span>
+    )
+  },
+  {
+    header: 'Quantité', accessorKey: 'quantity',
+    cell: ({ row }) => <Tag color="blue"><NumberOutlined /> {row.original.quantity}</Tag>
+  },
+  {
+    header: 'Client', accessorKey: 'customer.name',
+    cell: ({ row }) => (
+      <span>
+        <UserOutlined style={{ marginRight: 4, color: '#52c41a' }} />
+        {row.original.customer?.name || '-'}
+      </span>
+    )
+  },
+  {
+    header: 'Prix Unitaire', accessorKey: 'product.price',
+    cell: ({ row }) => (
+      <span style={{ fontWeight: 500 }}>
+        {row.original.product?.price?.toLocaleString('fr-FR')} XAF
+      </span>
+    )
+  },
+  {
+    header: 'Montant Total', accessorKey: 'amount',
+    cell: ({ row }) => (
+      <span style={{ fontWeight: 700, color: '#1677ff', fontSize: '14px' }}>
+        {parseFloat(row.original.amount || 0).toLocaleString('fr-FR')} XAF
+      </span>
+    )
+  },
+  {
+    header: 'Statut', accessorKey: 'status',
+    cell: ({ row }) => {
+      const config = getStatusConfig(row.original.status);
+      return <Tag color={config.color} icon={config.icon} style={{ fontWeight: 600 }}>{config.label}</Tag>;
+    }
+  },
+  {
+    header: 'Actions', id: 'actions',
+    cell: ({ row }) => (
+      <Space size="middle">
+        <NavLink to={`/commandeclients/${row.original.id}`}>
+          <Button type="primary" icon={<EditOutlined />} shape="circle" />
+        </NavLink>
+       <Button 
+  icon={<DownloadOutlined />} 
+  shape="circle" 
+  title="Télécharger la facture"
+  onClick={() => downloadInvoicePDF(row.original)} 
+/>
+        <Popconfirm
+          title="Confirmer la suppression"
+          onConfirm={() => handleDelete(row.original.id)}
+          icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+          okText="Oui" cancelText="Non"
+        >
+          <Button danger icon={<DeleteOutlined />} shape="circle" />
+        </Popconfirm>
+      </Space>
+    ),
+  },
+], [handleDelete, getStatusConfig]);
 
-  const filteredData = commandes.filter(item =>
+
+  const filteredData = useMemo(() =>
+  commandes.filter(item =>
     item.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  ),
+[commandes, searchTerm]);
   const table = useReactTable({
     data: filteredData,
     columns: columnsRT,
@@ -373,7 +489,7 @@ export function CommandesClients() {
         {/* Statistiques */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #1677ff',
               background: 'linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%)'
             }}>
@@ -386,7 +502,7 @@ export function CommandesClients() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #faad14',
               background: 'linear-gradient(135deg, #ffffff 0%, #fffbe6 100%)'
             }}>
@@ -400,7 +516,7 @@ export function CommandesClients() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #52c41a',
               background: 'linear-gradient(135deg, #ffffff 0%, #f6ffed 100%)'
             }}>
@@ -414,7 +530,7 @@ export function CommandesClients() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" outlined={false} style={{ 
+            <Card className="dashboard-card" variant="outlined" style={{ 
               borderTop: '1px solid #722ed1',
               background: 'linear-gradient(135deg, #ffffff 0%, #f9f0ff 100%)'
             }}>
@@ -646,6 +762,15 @@ export function CommandesClients() {
                         </span>
                       </Descriptions.Item>
                     </Descriptions>
+
+                
+<Button 
+  icon={<DownloadOutlined />} 
+  onClick={() => downloadInvoicePDF(selectedOrder)}
+  style={{ borderColor: '#1677ff', color: '#1677ff' }}
+>
+  Télécharger la facture PDF
+</Button>
 
                     <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
                       <Popconfirm
