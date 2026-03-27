@@ -482,8 +482,8 @@ export function CommandesFournisseurs() {
         {/* Statistiques */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #1677ff',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #1677ff',
               background: 'linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%)'
             }}>
               <Statistic 
@@ -495,8 +495,8 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #faad14',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #faad14',
               background: 'linear-gradient(135deg, #ffffff 0%, #fffbe6 100%)'
             }}>
               <Statistic 
@@ -509,8 +509,8 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #ff4d4f',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #ff4d4f',
               background: 'linear-gradient(135deg, #ffffff 0%, #fff1f0 100%)'
             }}>
               <Statistic 
@@ -523,8 +523,8 @@ export function CommandesFournisseurs() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #52c41a',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #52c41a',
               background: 'linear-gradient(135deg, #ffffff 0%, #f6ffed 100%)'
             }}>
               <Statistic 
@@ -556,13 +556,19 @@ export function CommandesFournisseurs() {
                   <tr key={hg.id}>
                     {hg.headers.map(header => (
                       <th 
-                        key={header.id} 
-                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                      </th>
+  key={header.id} 
+  style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
+  onClick={header.column.getToggleSortingHandler()}
+>
+  {flexRender(header.column.columnDef.header, header.getContext())}
+  {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc' 
+      ? <CaretUpOutlined /> 
+      : header.column.getIsSorted() === 'desc' 
+        ? <CaretDownOutlined /> 
+        : null
+  )}
+</th>
                     ))}
                   </tr>
                 ))}
@@ -610,7 +616,7 @@ export function CommandesFournisseurs() {
                     key={order.id}
                     className="mobile-card"
                     size="small"
-                    bordered
+                    outlined
                     hoverable
                     onClick={() => openOrder(order)}
                     style={{
@@ -743,7 +749,7 @@ export function CommandesFournisseurs() {
                 
                 return (
                   <>
-                    <Descriptions column={1} size="small" bordered>
+                    <Descriptions column={1} size="small" outlined>
                       <Descriptions.Item label="Statut">
                         <Tag color={config.color} icon={config.icon} style={{ fontWeight: 600 }}>
                           {config.label}

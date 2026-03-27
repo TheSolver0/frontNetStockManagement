@@ -361,7 +361,13 @@ export function Parametres() {
                                                             header.column.columnDef.header,
                                                             header.getContext()
                                                         )}
-                                                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                        {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc'
+        ? <CaretUpOutlined />
+        : header.column.getIsSorted() === 'desc'
+            ? <CaretDownOutlined />
+            : null
+)}
                                                     </th>
                                                 ))}
                                             </tr>
@@ -424,7 +430,13 @@ export function Parametres() {
                                                     header.column.columnDef.header,
                                                     header.getContext()
                                                 )}
-                                                {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc'
+        ? <CaretUpOutlined />
+        : header.column.getIsSorted() === 'desc'
+            ? <CaretDownOutlined />
+            : null
+)}
                                             </th>
                                         ))}
                                     </tr>

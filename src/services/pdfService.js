@@ -178,7 +178,7 @@ class PDFService {
         fontSize: 9,
         cellPadding: 3
       },
-      bodyStyles: {
+      styless: {
         fontSize: 8.5,
         cellPadding: 3,
         textColor: this.COLORS.dark

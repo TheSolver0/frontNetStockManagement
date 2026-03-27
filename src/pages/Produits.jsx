@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink } from "react-router-dom";
 import { Button, Card, Col, Row, Form, Input, InputNumber, Modal, Select, Popconfirm, message, Table, Tag, Space, Typography, Flex, Grid, Drawer, Descriptions } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -96,10 +96,13 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
 };
 
 export function Produits() {
-    const [produits, setProduits] = useState([]);
+   const [produits, setProduits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     useEffect(() => {
         setLoading(true);
@@ -116,85 +119,34 @@ export function Produits() {
             .finally(() => setLoading(false));
     }, []);
 
-    const handleDelete = async (id) => {
+      const handleDelete = useCallback(async (id) => {
         try {
             await axiosInstance.delete(`${API_URL}Products/${id}/`);
             message.success('Produit supprimé avec succès');
             setProduits(prev => prev.filter(p => p.id !== id));
         } catch (error) {
             message.error("Erreur lors de la suppression du produit !");
-            console.error('Erreur lors de la suppression', error);
         }
-    };
+    }, []);
 
-    const columns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', sorter: (a, b) => a.id - b.id, },
-        { title: 'Nom', dataIndex: 'name', key: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
-        {
-            title: 'Stock',
-            dataIndex: 'quantity',
-            key: 'quantity',
-            sorter: (a, b) => a.quantity - b.quantity,
-            render: (stock, record) => (
-                <Tag color={stock <= record.threshold ? 'volcano' : 'green'}>
-                    {stock}
-                </Tag>
-            ),
-        },
-        { title: 'Prix Unitaire', dataIndex: 'price', key: 'price', sorter: (a, b) => a.price - b.price, render: price => `${price.toLocaleString()} XAF` },
-        { title: 'Seuil d\'Alerte', dataIndex: 'threshold', key: 'threshold', sorter: (a, b) => a.threshold - b.threshold },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, record) => (
-                <Space size="middle">
-                    <NavLink to={`/produit/${record.id}`}>
-                        <Button type="primary" icon={<EditOutlined />} shape="circle" />
-                    </NavLink>
-                    <Popconfirm
-                        title="Confirmer la suppression"
-                        description="Êtes-vous sûr de vouloir supprimer ce produit ?"
-                        onConfirm={() => handleDelete(record.id)}
-                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-                        okText="Oui"
-                        cancelText="Non"
-                    >
-                        <Button type="danger" icon={<DeleteOutlined />} shape="circle" />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
-
-    const filteredData = produits.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const screens = Grid.useBreakpoint();
-    const [drawerVisible, setDrawerVisible] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-
-    const openProduct = (p) => {
-        setSelectedProduct(p);
-        setDrawerVisible(true);
-    };
-
-    const closeDrawer = () => setDrawerVisible(false);
-
-    const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
-
-    const columnsRT = [
+    const columnsRT = useMemo(() => [
         { header: 'ID', accessorKey: 'id' },
         { header: 'Nom', accessorKey: 'name' },
         {
             header: 'Stock',
             accessorKey: 'quantity',
-            cell: ({ row }) => (<Tag color={row.original.quantity <= row.original.threshold ? 'volcano' : 'green'}>{row.original.quantity}</Tag>),
+            cell: ({ row }) => (
+                <Tag color={row.original.quantity <= row.original.threshold ? 'volcano' : 'green'}>
+                    {row.original.quantity}
+                </Tag>
+            ),
         },
         {
             header: 'Prix Unitaire',
             accessorKey: 'price',
-            cell: ({ row }) => (row.original.price ? `${row.original.price.toLocaleString()} XAF` : '-'),
+            cell: ({ row }) => (
+                row.original.price ? `${row.original.price.toLocaleString()} XAF` : '-'
+            ),
         },
         { header: "Seuil d'Alerte", accessorKey: 'threshold' },
         {
@@ -218,7 +170,28 @@ export function Produits() {
                 </Space>
             ),
         },
-    ];
+    ], [handleDelete]);
+
+    const filteredData = useMemo(() =>
+        produits.filter(item =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+    [produits, searchTerm]);
+
+    const screens = Grid.useBreakpoint();
+    // const [drawerVisible, setDrawerVisible] = useState(false);
+    // const [selectedProduct, setSelectedProduct] = useState(null);
+
+    const openProduct = (p) => {
+        setSelectedProduct(p);
+        setDrawerVisible(true);
+    };
+
+    const closeDrawer = () => setDrawerVisible(false);
+
+    // const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
+
+    
 
     const table = useReactTable({
         data: filteredData,
@@ -257,7 +230,13 @@ export function Produits() {
                                         {hg.headers.map(header => (
                                             <th key={header.id} style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} onClick={header.column.getToggleSortingHandler()}>
                                                 {flexRender(header.column.columnDef.header, header.getContext())}
-                                                {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc'
+        ? <CaretUpOutlined />
+        : header.column.getIsSorted() === 'desc'
+            ? <CaretDownOutlined />
+            : null
+)}
                                             </th>
                                         ))}
                                     </tr>
@@ -284,7 +263,7 @@ export function Produits() {
                                     key={product.id}
                                     className="mobile-card"
                                     size="small"
-                                    bordered
+                                    variant='outlined'
                                     hoverable
                                     onClick={() => openProduct(product)}
                                 >

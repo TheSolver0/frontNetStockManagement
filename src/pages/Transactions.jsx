@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { NavLink } from "react-router-dom";
 import { 
   Button, 
@@ -70,12 +70,12 @@ export function Transactions() {
   }, []);
 
   // Helpers pour trouver les entités liées
-  const getProductName = (productId) => {
+   const getProductName = useCallback((productId) => {
     const product = produits.find(p => p.id === productId);
     return product ? product.name : 'Produit non trouvé';
-  };
+  }, [produits]);
 
-  const getActorName = (mouvement) => {
+  const getActorName = useCallback((mouvement) => {
     if (mouvement.customerId) {
       const client = clients.find(c => c.id === mouvement.customerId);
       return client ? client.name : 'Client non trouvé';
@@ -85,22 +85,20 @@ export function Transactions() {
       return fournisseur ? fournisseur.name : 'Fournisseur non trouvé';
     }
     return '-';
-  };
+  }, [clients, fournisseurs]);
 
-  const getActorType = (mouvement) => {
+  const getActorType = useCallback((mouvement) => {
     if (mouvement.customerId) return 'Client';
     if (mouvement.supplierId) return 'Fournisseur';
     return '-';
-  };
+  }, []);
 
   // Statistiques
-  const calculateStats = () => {
+ const stats = useMemo(() => {
     const entrees = mouvements.filter(m => m.type === 'Entrée');
     const sorties = mouvements.filter(m => m.type === 'Sortie');
-    
     const totalEntrees = entrees.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
     const totalSorties = sorties.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
-    
     return {
       totalEntrees,
       totalSorties,
@@ -108,12 +106,12 @@ export function Transactions() {
       nombreEntrees: entrees.length,
       nombreSorties: sorties.length
     };
-  };
+  }, [mouvements]);
 
-  const stats = calculateStats();
+  // const stats = calculateStats();
 
   // Colonnes pour React Table
-  const columnsRT = [
+  const columnsRT = useMemo(() => [
     { 
       header: 'ID', 
       accessorKey: 'id',
@@ -143,12 +141,8 @@ export function Transactions() {
         const icon = actorType === 'Client' ? <UserOutlined /> : <ShopOutlined />;
         return (
           <div>
-            <div style={{ fontWeight: 600 }}>
-              {icon} {actorName}
-            </div>
-            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-              {actorType}
-            </div>
+            <div style={{ fontWeight: 600 }}>{icon} {actorName}</div>
+            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{actorType}</div>
           </div>
         );
       }
@@ -167,9 +161,7 @@ export function Transactions() {
       header: 'Quantité', 
       accessorKey: 'quantity',
       cell: ({ row }) => (
-        <Tag color="blue">
-          <NumberOutlined /> {row.original.quantity}
-        </Tag>
+        <Tag color="blue"><NumberOutlined /> {row.original.quantity}</Tag>
       )
     },
     {
@@ -186,18 +178,21 @@ export function Transactions() {
         </span>
       )
     }
-  ];
+  ], [getActorName, getActorType, getProductName]);
 
-  const filteredData = mouvements.filter(item => {
-    const actorName = getActorName(item).toLowerCase();
-    const productName = getProductName(item.productId).toLowerCase();
-    const search = searchTerm.toLowerCase();
-    
-    return actorName.includes(search) || 
-           productName.includes(search) ||
-           item.type?.toLowerCase().includes(search);
-  });
+  const filteredData = useMemo(() =>
+    mouvements.filter(item => {
+      const actorName = getActorName(item).toLowerCase();
+      const productName = getProductName(item.productId).toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return actorName.includes(search) || 
+             productName.includes(search) ||
+             item.type?.toLowerCase().includes(search);
+    }),
+  [mouvements, searchTerm, getActorName, getProductName]);
 
+
+  
   const table = useReactTable({
     data: filteredData,
     columns: columnsRT,
@@ -230,8 +225,8 @@ export function Transactions() {
         {/* Statistiques */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #cf1322',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #cf1322',
               background: 'linear-gradient(135deg, #ffffff 0%, #fff1f0 100%)'
             }}>
               <Statistic 
@@ -248,8 +243,8 @@ export function Transactions() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #52c41a',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #52c41a',
               background: 'linear-gradient(135deg, #ffffff 0%, #f6ffed 100%)'
             }}>
               <Statistic 
@@ -266,8 +261,8 @@ export function Transactions() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #1677ff',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #1677ff',
               background: 'linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%)'
             }}>
               <Statistic 
@@ -284,8 +279,8 @@ export function Transactions() {
           </Col>
 
           <Col xs={24} sm={12} md={6}>
-            <Card className="dashboard-card" bordered={false} style={{ 
-              borderLeft: '4px solid #722ed1',
+            <Card className="dashboard-card" outlined={false} style={{ 
+              borderTop: '1px solid #722ed1',
               background: 'linear-gradient(135deg, #ffffff 0%, #f9f0ff 100%)'
             }}>
               <Statistic 
@@ -318,13 +313,19 @@ export function Transactions() {
                   <tr key={hg.id}>
                     {hg.headers.map(header => (
                       <th 
-                        key={header.id} 
-                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                      </th>
+  key={header.id} 
+  style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
+  onClick={header.column.getToggleSortingHandler()}
+>
+  {flexRender(header.column.columnDef.header, header.getContext())}
+  {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc' 
+      ? <CaretUpOutlined /> 
+      : header.column.getIsSorted() === 'desc' 
+        ? <CaretDownOutlined /> 
+        : null
+  )}
+</th>
                     ))}
                   </tr>
                 ))}
@@ -367,7 +368,7 @@ export function Transactions() {
                   key={transaction.id}
                   className="mobile-card"
                   size="small"
-                  bordered
+                  outlined
                   hoverable
                   onClick={() => openTransaction(transaction)}
                   style={{
@@ -448,7 +449,7 @@ export function Transactions() {
             >
               {selectedTransaction && (
                 <>
-                  <Descriptions column={1} size="small" bordered>
+                  <Descriptions column={1} size="small" outlined>
                     <Descriptions.Item label="Type">
                       <Tag 
                         color={selectedTransaction.type === 'Entrée' ? 'red' : 'green'}

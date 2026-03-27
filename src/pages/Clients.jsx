@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { NavLink } from "react-router-dom";
 import { 
   Button, 
@@ -149,70 +149,60 @@ export function Clients() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_URL}Customers/${id}/`);
-      message.success('Client supprimé avec succès');
-      setClients(prev => prev.filter(c => c.id !== id));
-    } catch (error) {
-      message.error("Erreur lors de la suppression du client !");
-      console.error('Erreur lors de la suppression', error);
-    }
-  };
+  const handleDelete = useCallback(async (id) => {
+  try {
+    await axiosInstance.delete(`${API_URL}Customers/${id}/`);
+    message.success('Client supprimé avec succès');
+    setClients(prev => prev.filter(c => c.id !== id));
+  } catch (error) {
+    message.error("Erreur lors de la suppression du client !");
+  }
+}, []);
 
-  // Colonnes pour React Table
-  const columnsRT = [
-    { header: 'ID', accessorKey: 'id' },
-    { 
-      header: 'Nom', 
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 600 }}>{row.original.name}</span>
-      )
-    },
-    { 
-      header: 'Email', 
-      accessorKey: 'email',
-      cell: ({ row }) => (
-        <span style={{ color: '#1677ff' }}>{row.original.email}</span>
-      )
-    },
-    { 
-      header: 'Adresse', 
-      accessorKey: 'address',
-      cell: ({ row }) => (
-        <span style={{ fontSize: '13px' }}>{row.original.address}</span>
-      )
-    },
-    { 
-      header: 'Téléphone', 
-      accessorKey: 'telephone',
-      cell: ({ row }) => (
-        <Tag color="blue">{row.original.telephone}</Tag>
-      )
-    },
-    {
-      header: 'Actions',
-      id: 'actions',
-      cell: ({ row }) => (
-        <Space size="middle">
-          <NavLink to={`/client/${row.original.id}`}>
-            <Button type="primary" icon={<EditOutlined />} shape="circle" />
-          </NavLink>
-          <Popconfirm
-            title="Confirmer la suppression"
-            description="Êtes-vous sûr de vouloir supprimer ce client ?"
-            onConfirm={() => handleDelete(row.original.id)}
-            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-            okText="Oui"
-            cancelText="Non"
-          >
-            <Button type="danger" icon={<DeleteOutlined />} shape="circle" />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+const columnsRT = useMemo(() => [
+  { header: 'ID', accessorKey: 'id' },
+  { 
+    header: 'Nom', 
+    accessorKey: 'name',
+    cell: ({ row }) => <span style={{ fontWeight: 600 }}>{row.original.name}</span>
+  },
+  { 
+    header: 'Email', 
+    accessorKey: 'email',
+    cell: ({ row }) => <span style={{ color: '#1677ff' }}>{row.original.email}</span>
+  },
+  { 
+    header: 'Adresse', 
+    accessorKey: 'address',
+    cell: ({ row }) => <span style={{ fontSize: '13px' }}>{row.original.address}</span>
+  },
+  { 
+    header: 'Téléphone', 
+    accessorKey: 'telephone',
+    cell: ({ row }) => <Tag color="blue">{row.original.telephone}</Tag>
+  },
+  {
+    header: 'Actions',
+    id: 'actions',
+    cell: ({ row }) => (
+      <Space size="middle">
+        <NavLink to={`/client/${row.original.id}`}>
+          <Button type="primary" icon={<EditOutlined />} shape="circle" />
+        </NavLink>
+        <Popconfirm
+          title="Confirmer la suppression"
+          description="Êtes-vous sûr de vouloir supprimer ce client ?"
+          onConfirm={() => handleDelete(row.original.id)}
+          icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+          okText="Oui"
+          cancelText="Non"
+        >
+          <Button danger icon={<DeleteOutlined />} shape="circle" />
+        </Popconfirm>
+      </Space>
+    ),
+  },
+], [handleDelete]);
 
   const filteredData = clients.filter(item =>
     item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -274,13 +264,19 @@ export function Clients() {
                   <tr key={hg.id}>
                     {hg.headers.map(header => (
                       <th 
-                        key={header.id} 
-                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                      </th>
+  key={header.id} 
+  style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
+  onClick={header.column.getToggleSortingHandler()}
+>
+  {flexRender(header.column.columnDef.header, header.getContext())}
+  {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc' 
+      ? <CaretUpOutlined /> 
+      : header.column.getIsSorted() === 'desc' 
+        ? <CaretDownOutlined /> 
+        : null
+  )}
+</th>
                     ))}
                   </tr>
                 ))}
@@ -323,7 +319,7 @@ export function Clients() {
                   key={client.id}
                   className="mobile-card"
                   size="small"
-                  bordered
+                  outlined
                   hoverable
                   onClick={() => openClient(client)}
                 >
@@ -392,21 +388,21 @@ export function Clients() {
               width={Math.min(520, window.innerWidth - 40)}
             >
               {selectedClient && (
-                <Descriptions column={1} size="small" bordered>
-                  <Descriptions.Item label={<><UserOutlined /> Nom</>}>
+                <Descriptions column={1} size="small" outlined>
+                  <Descriptions.Item label={<span><UserOutlined /> Nom</span>}>
                     {selectedClient.name}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><MailOutlined /> Email</>}>
+                  <Descriptions.Item label={<span><MailOutlined /> Email</span>}>
                     <a href={`mailto:${selectedClient.email}`} style={{ color: '#1677ff' }}>
                       {selectedClient.email}
                     </a>
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><PhoneOutlined /> Téléphone</>}>
+                  <Descriptions.Item label={<span><PhoneOutlined /> Téléphone</span>}>
                     <a href={`tel:${selectedClient.telephone}`}>
                       {selectedClient.telephone}
                     </a>
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><HomeOutlined /> Adresse</>}>
+                  <Descriptions.Item label={<span><HomeOutlined /> Adresse</span>}>
                     {selectedClient.address}
                   </Descriptions.Item>
                 </Descriptions>

@@ -23,7 +23,7 @@ export default function ResponsiveTable({ table, renderTable, onRowClick, render
             key={row.id}
             className="mobile-card"
             size="small"
-            bordered
+            outlined
             hoverable
             onClick={() => openRow(row)}
           >

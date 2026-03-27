@@ -189,7 +189,7 @@ function Root() {
           open={drawerVisible}
           onClose={() => setDrawerVisible(false)}
           placement="left"
-          bodyStyle={{ padding: 0 }}
+          styles={{ padding: 0 }}
           className="mobile-drawer"
         >
           <div className="logo-container" style={{ padding: '16px' }}>

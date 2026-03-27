@@ -71,7 +71,7 @@ function ModifierClient({ data, isEditing, setIsEditing }) {
             style={{ width: '100%', maxWidth: 800, margin: '0 auto' }}
         >
             {!isEditing ? (
-                <Descriptions bordered column={1}>
+                <Descriptions outlined column={1}>
                     <Descriptions.Item label={<Space><UserOutlined /> Nom</Space>}>
                         {data.name}
                     </Descriptions.Item>

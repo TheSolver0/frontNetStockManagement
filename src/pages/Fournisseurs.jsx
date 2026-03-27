@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { NavLink } from "react-router-dom";
 import { 
   Button, 
@@ -199,79 +199,71 @@ export function Fournisseurs() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_URL}Suppliers/${id}/`);
-      message.success('Fournisseur supprimé avec succès');
-      setFournisseurs(prev => prev.filter(f => f.id !== id));
-    } catch (error) {
-      message.error("Erreur lors de la suppression du fournisseur !");
-      console.error('Erreur lors de la suppression', error);
-    }
-  };
 
-  // Colonnes pour React Table
-  const columnsRT = [
-    { header: 'ID', accessorKey: 'id' },
-    { 
-      header: 'Nom', 
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <span style={{ fontWeight: 600 }}>{row.original.name}</span>
-      )
-    },
-    { 
-      header: 'Email', 
-      accessorKey: 'email',
-      cell: ({ row }) => (
-        <span style={{ color: '#1677ff' }}>{row.original.email}</span>
-      )
-    },
-    { 
-      header: 'Adresse', 
-      accessorKey: 'address',
-      cell: ({ row }) => (
-        <span style={{ fontSize: '13px' }}>{row.original.address}</span>
-      )
-    },
-    { 
-      header: 'Téléphone', 
-      accessorKey: 'telephone',
-      cell: ({ row }) => (
-        <Tag color="blue">{row.original.telephone}</Tag>
-      )
-    },
-    { 
-      header: 'Délai (jrs)', 
-      accessorKey: 'delay',
-      cell: ({ row }) => (
-        <Tag color="orange" icon={<ClockCircleOutlined />}>
-          {row.original.delay} jours
-        </Tag>
-      )
-    },
-    {
-      header: 'Actions',
-      id: 'actions',
-      cell: ({ row }) => (
-        <Space size="middle">
-          <NavLink to={`/fournisseur/${row.original.id}`}>
-            <Button type="primary" icon={<EditOutlined />} shape="circle" />
-          </NavLink>
-          <Popconfirm
-            title="Confirmer la suppression"
-            description="Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
-            onConfirm={() => handleDelete(row.original.id)}
-            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-            okText="Oui"
-            cancelText="Non"
-          >
-            <Button type="danger" icon={<DeleteOutlined />} shape="circle" />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+
+const handleDelete = useCallback(async (id) => {
+  try {
+    await axiosInstance.delete(`${API_URL}Suppliers/${id}/`);
+    message.success('Fournisseur supprimé avec succès');
+    setFournisseurs(prev => prev.filter(f => f.id !== id));
+  } catch (error) {
+    message.error("Erreur lors de la suppression du fournisseur !");
+  }
+}, []);
+
+const columnsRT = useMemo(() => [
+  { header: 'ID', accessorKey: 'id' },
+  { 
+    header: 'Nom', 
+    accessorKey: 'name',
+    cell: ({ row }) => <span style={{ fontWeight: 600 }}>{row.original.name}</span>
+  },
+  { 
+    header: 'Email', 
+    accessorKey: 'email',
+    cell: ({ row }) => <span style={{ color: '#1677ff' }}>{row.original.email}</span>
+  },
+  { 
+    header: 'Adresse', 
+    accessorKey: 'address',
+    cell: ({ row }) => <span style={{ fontSize: '13px' }}>{row.original.address}</span>
+  },
+  { 
+    header: 'Téléphone', 
+    accessorKey: 'telephone',
+    cell: ({ row }) => <Tag color="blue">{row.original.telephone}</Tag>
+  },
+  { 
+    header: 'Délai (jrs)', 
+    accessorKey: 'delay',
+    cell: ({ row }) => (
+      <Tag color="orange" icon={<ClockCircleOutlined />}>
+        {row.original.delay} jours
+      </Tag>
+    )
+  },
+  {
+    header: 'Actions',
+    id: 'actions',
+    cell: ({ row }) => (
+      <Space size="middle">
+        <NavLink to={`/fournisseur/${row.original.id}`}>
+          <Button type="primary" icon={<EditOutlined />} shape="circle" />
+        </NavLink>
+        <Popconfirm
+          title="Confirmer la suppression"
+          description="Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
+          onConfirm={() => handleDelete(row.original.id)}
+          icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+          okText="Oui"
+          cancelText="Non"
+        >
+          <Button danger icon={<DeleteOutlined />} shape="circle" />
+        </Popconfirm>
+      </Space>
+    ),
+  },
+], [handleDelete]);
 
   const filteredData = fournisseurs.filter(item =>
     item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -333,13 +325,19 @@ export function Fournisseurs() {
                   <tr key={hg.id}>
                     {hg.headers.map(header => (
                       <th 
-                        key={header.id} 
-                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
-                      </th>
+  key={header.id} 
+  style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} 
+  onClick={header.column.getToggleSortingHandler()}
+>
+  {flexRender(header.column.columnDef.header, header.getContext())}
+  {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc' 
+      ? <CaretUpOutlined /> 
+      : header.column.getIsSorted() === 'desc' 
+        ? <CaretDownOutlined /> 
+        : null
+  )}
+</th>
                     ))}
                   </tr>
                 ))}
@@ -382,7 +380,7 @@ export function Fournisseurs() {
                   key={supplier.id}
                   className="mobile-card"
                   size="small"
-                  bordered
+                  outlined
                   hoverable
                   onClick={() => openSupplier(supplier)}
                 >
@@ -461,28 +459,28 @@ export function Fournisseurs() {
               width={Math.min(520, window.innerWidth - 40)}
             >
               {selectedSupplier && (
-                <Descriptions column={1} size="small" bordered>
-                  <Descriptions.Item label={<><ShopOutlined /> Nom</>}>
+                <Descriptions column={1} size="small" outlined>
+                  <Descriptions.Item label={<span><ShopOutlined /> Nom</span>}>
                     {selectedSupplier.name}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><MailOutlined /> Email</>}>
+                  <Descriptions.Item label={<span><MailOutlined /> Email</span>}>
                     <a href={`mailto:${selectedSupplier.email}`} style={{ color: '#1677ff' }}>
                       {selectedSupplier.email}
                     </a>
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><PhoneOutlined /> Téléphone</>}>
+                  <Descriptions.Item label={<span><PhoneOutlined /> Téléphone</span>}>
                     <a href={`tel:${selectedSupplier.telephone}`}>
                       {selectedSupplier.telephone}
                     </a>
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><HomeOutlined /> Adresse</>}>
+                  <Descriptions.Item label={<span><HomeOutlined /> Adresse</span>}>
                     {selectedSupplier.address}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><ClockCircleOutlined /> Délai de livraison</>}>
+                  <Descriptions.Item label={<span><ClockCircleOutlined /> Délai de livraison</span>}>
                     <Tag color="orange">{selectedSupplier.delay} jours</Tag>
                   </Descriptions.Item>
                   {selectedSupplier.products && selectedSupplier.products.length > 0 && (
-                    <Descriptions.Item label={<><AppstoreOutlined /> Produits fournis</>}>
+                    <Descriptions.Item label={<span><AppstoreOutlined /> Produits fournis</span>}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {selectedSupplier.products.map((product, index) => (
                           <Tag key={index} color="blue">

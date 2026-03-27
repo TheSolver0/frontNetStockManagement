@@ -1,4 +1,4 @@
-import React, { useState, useEffect, } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import BarChart from './Bar';
 import './Dashboard.css';
 import LineChart from './Line';
@@ -76,15 +76,16 @@ export function Dashboard() {
         }
     };
     useEffect(() => {
-        getMouvements().then(setMouvements);
-        getMouvements().catch(error => console.error("Erreur lors du chargement des Mouvements :", error));
-        getProduits()
-            .then(setProduits)
-            .catch((error) => console.error("Erreur lors du chargement des produits :", error));
-        getCommandesClient().then(setCommandes);
-        getCommandesClient().catch(error => console.error("Erreur lors du chargement des commandes :", error));
-
-    }, [])
+    getMouvements()
+        .then(setMouvements)
+        .catch(error => console.error("Erreur mouvements :", error));
+    getProduits()
+        .then(setProduits)
+        .catch(error => console.error("Erreur produits :", error));
+    getCommandesClient()
+        .then(setCommandes)
+        .catch(error => console.error("Erreur commandes :", error));
+}, []);
     useEffect(() => {
         // Charger les données une seule fois
         getClients()
@@ -196,75 +197,65 @@ export function Dashboard() {
     const supplier = exampleMouvement?.supplierId ? fournisseurs.find(f => f.id === exampleMouvement.supplierId) : null;
 
 
-    const columns = [
-        { header: 'ID', accessorKey: 'id' },
-        {
-            header: 'Type',
-            id: 'type',
-            cell: ({ row }) => (<span className="badge " style={{
+   const columns = useMemo(() => [
+    { header: 'ID', accessorKey: 'id' },
+    {
+        header: 'Type',
+        id: 'type',
+        cell: ({ row }) => (
+            <span className="badge" style={{
                 fontSize: '12px',
-                background: (row.original.type === 'Entrée') ? '#06d6a0' :
-                    (row.original.type === 'Sortie') ? 'red' : ''
-            }} >{row.original.type}</span>)
-        },
-        {
-            header: 'Acteur',
-            id: 'acteur',
-            cell: ({ row }) => {
-                const orig = row.original;
-                // Prioriser le client si présent sinon le fournisseur
-                if (orig.customerId) {
-                    const c = clients.find(x => x.id === orig.customerId);
-                    return c ? c.name || 'Client' : 'Client non trouvé';
-                }
-                if (orig.supplierId) {
-                    const f = fournisseurs.find(x => x.id === orig.supplierId);
-                    return f ? f.name || 'Fournisseur' : 'Fournisseur non trouvé';
-                }
-                return '-';
+                background: row.original.type === 'Entrée' ? '#06d6a0' :
+                    row.original.type === 'Sortie' ? 'red' : ''
+            }}>
+                {row.original.type}
+            </span>
+        )
+    },
+    {
+        header: 'Acteur',
+        id: 'acteur',
+        cell: ({ row }) => {
+            const orig = row.original;
+            if (orig.customerId) {
+                const c = clients.find(x => x.id === orig.customerId);
+                return c ? c.name || 'Client' : 'Client non trouvé';
             }
-        },
-        {
-            header: 'Produit',
-            id: 'produit',
-            cell: ({ row }) => {
-                const orig = row.original;
-                if (orig.productId) {
-                    const p = produits.find(x => x.id === orig.productId);
-                    return p ? p.name || 'Produit' : 'Produit non trouvé';
-                }
-                return '-';
+            if (orig.supplierId) {
+                const f = fournisseurs.find(x => x.id === orig.supplierId);
+                return f ? f.name || 'Fournisseur' : 'Fournisseur non trouvé';
             }
-        },
-        { header: 'Quantité', accessorKey: 'quantity' },
-        {
-            header: 'Montant(XAF)',
-            id: 'amount',
-            cell: ({ row }) => (<span className="badge " style={{
+            return '-';
+        }
+    },
+    {
+        header: 'Produit',
+        id: 'produit',
+        cell: ({ row }) => {
+            const orig = row.original;
+            if (orig.productId) {
+                const p = produits.find(x => x.id === orig.productId);
+                return p ? p.name || 'Produit' : 'Produit non trouvé';
+            }
+            return '-';
+        }
+    },
+    { header: 'Quantité', accessorKey: 'quantity' },
+    {
+        header: 'Montant(XAF)',
+        id: 'amount',
+        cell: ({ row }) => (
+            <span className="badge" style={{
                 fontSize: '13px',
-                background: (row.original.type === 'Entrée') ? 'red' :
-                    (row.original.type === 'Sortie') ? '#06d6a0' : ''
-            }} >{row.original.amount}</span>)
-        },
-        // {
-        //     header: 'Actions',
-        //     id: 'actions',
-        //     cell: ({ row }) => (
-        //         <Flex justify="space-evenly">
-        //             <Popconfirm
-        //                 title="Suppression de ligne"
-        //                 description="Êtes-vous sûr de vouloir supprimer cette ligne ?"
-        //                 onConfirm={() => handleDelete(row.original.id)}
-        //                 icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-        //             >
-        //                 <Button danger><MinusSquareFilled /></Button>
-        //             </Popconfirm>
+                background: row.original.type === 'Entrée' ? 'red' :
+                    row.original.type === 'Sortie' ? '#06d6a0' : ''
+            }}>
+                {row.original.amount}
+            </span>
+        )
+    },
+], [clients, fournisseurs, produits]);
 
-
-        //         </Flex>
-        //     ),
-        // },
-    ];
     const table = useReactTable({
         data: mouvements,
         columns,
@@ -293,37 +284,28 @@ export function Dashboard() {
 
 
     // Calcul des statistiques
-    const calculateStats = () => {
-        if (!Array.isArray(commandes) || !Array.isArray(produits) || !Array.isArray(mouvements)) return {};
+   const stats = useMemo(() => {
+    if (!Array.isArray(commandes) || !Array.isArray(produits) || !Array.isArray(mouvements)) return {};
 
-        const totalVentes = commandes
-            .filter(c => c.status === 'LIVREE')
-            .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+    const totalVentes = commandes
+        .filter(c => c.status === 'LIVREE')
+        .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
 
-        const produitsCritiques = produits
-            .filter(p => p.quantity <= p.seuilAlerte)
-            .length;
+    const produitsCritiques = produits
+        .filter(p => p.quantity <= p.seuilAlerte).length;
 
-        const totalProduits = produits.reduce((sum, p) => sum + (parseInt(p.quantity) || 0), 0);
+    const totalProduits = produits
+        .reduce((sum, p) => sum + (parseInt(p.quantity) || 0), 0);
 
-        const mouvementsMois = mouvements
-            .filter(m => {
-                const date = new Date(m.date);
-                const maintenant = new Date();
-                return date.getMonth() === maintenant.getMonth() &&
-                    date.getFullYear() === maintenant.getFullYear();
-            }).length;
+    const mouvementsMois = mouvements.filter(m => {
+        const date = new Date(m.date);
+        const maintenant = new Date();
+        return date.getMonth() === maintenant.getMonth() &&
+            date.getFullYear() === maintenant.getFullYear();
+    }).length;
 
-        return {
-            totalVentes,
-            produitsCritiques,
-            totalProduits,
-            mouvementsMois
-        };
-    };
-
-    const stats = calculateStats();
-
+    return { totalVentes, produitsCritiques, totalProduits, mouvementsMois };
+}, [commandes, produits, mouvements]);
     return (
         <ErrorBoundary>
             <div className="contentBody">
@@ -343,24 +325,24 @@ export function Dashboard() {
                     {/* Stat cards */}
                     <Row gutter={[16, 16]} className="stats-grid">
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card sales-card" bordered={false}>
+                            <Card className="dashboard-card sales-card" outlined={false}>
                                 <Statistic title="Ventes Totales" value={stats.totalVentes?.toLocaleString() || 0} suffix="XAF" />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card inventory-card" bordered={false}>
+                            <Card className="dashboard-card inventory-card" outlined={false}>
                                 <Statistic title="Stock Total" value={stats.totalProduits || 0} />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} md={6}>
-                            <Card className="dashboard-card critical-stock-card" bordered={false}>
+                            <Card className="dashboard-card critical-stock-card" outlined={false}>
                                 <Statistic title="Produits Critiques" value={stats.produitsCritiques || 0} />
                             </Card>
                         </Col>
                         {/* Hide the movements card on very small screens to declutter */}
                         {screens.sm && (
                             <Col xs={24} sm={12} md={6}>
-                                <Card className="dashboard-card movements-card" bordered={false}>
+                                <Card className="dashboard-card movements-card" outlined={false}>
                                     <Statistic title="Mouvements du Mois" value={stats.mouvementsMois || 0} />
                                 </Card>
                             </Col>
@@ -428,7 +410,13 @@ export function Dashboard() {
                                                 {headerGroup.headers.map(header => (
                                                     <th key={header.id} style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} onClick={header.column.getToggleSortingHandler()}>
                                                         {flexRender(header.column.columnDef.header, header.getContext())}
-                                                        {{ asc: <CaretUpOutlined />, desc: <CaretDownOutlined /> }[header.column.getIsSorted()] ?? null}
+                                                        {header.column.getCanSort() && (
+    header.column.getIsSorted() === 'asc'
+        ? <CaretUpOutlined />
+        : header.column.getIsSorted() === 'desc'
+            ? <CaretDownOutlined />
+            : null
+)}
                                                     </th>
                                                 ))}
                                             </tr>
@@ -453,7 +441,7 @@ export function Dashboard() {
                 </div>
 
                 <div className="addProduit" >
-                    <Card className="chart-card" bordered={false}>
+                    <Card className="chart-card" outlined={false}>
                         {data?.labels?.length && data?.datasets?.length ? (
                             <LineChart data={data} compact={!screens.md} />
                         ) : (
@@ -466,7 +454,7 @@ export function Dashboard() {
             {/* Show second chart only on medium and larger screens to keep mobile clean */}
             {screens.md && (
                 <div className="addProduit" style={{ marginTop: '20px' }}>
-                    <Card className="chart-card" bordered={false}>
+                    <Card className="chart-card" outlined={false}>
                         <LineChart data={data2} />
                     </Card>
                 </div>
