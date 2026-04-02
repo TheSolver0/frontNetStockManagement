@@ -620,7 +620,7 @@ const downloadInvoicePDF = useCallback((order) => {
                     key={order.id}
                     className="mobile-card"
                     size="small"
-                    outlined
+                   variant="outlined"
                     hoverable
                     onClick={() => openOrder(order)}
                     style={{
@@ -733,7 +733,7 @@ const downloadInvoicePDF = useCallback((order) => {
                 const config = getStatusConfig(selectedOrder.status);
                 return (
                   <>
-                    <Descriptions column={1} size="small" outlined>
+                    <Descriptions column={1} size="small" bordered>
                       <Descriptions.Item label="Statut">
                         <Tag color={config.color} icon={config.icon} style={{ fontWeight: 600 }}>
                           {config.label}
@@ -764,35 +764,27 @@ const downloadInvoicePDF = useCallback((order) => {
                     </Descriptions>
 
                 
-<Button 
-  icon={<DownloadOutlined />} 
-  onClick={() => downloadInvoicePDF(selectedOrder)}
-  style={{ borderColor: '#1677ff', color: '#1677ff' }}
->
-  Télécharger la facture PDF
-</Button>
+<div style={{ marginTop: 20, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+  <Button 
+    icon={<DownloadOutlined />} 
+    onClick={() => downloadInvoicePDF(selectedOrder)}
+    style={{ borderColor: '#1677ff', color: '#1677ff' }}
+  >
+    Facture PDF
+  </Button>
 
-                    <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-                      <Popconfirm
-                        title="Confirmer la suppression"
-                        onConfirm={() => {
-                          handleDelete(selectedOrder.id);
-                          closeDrawer();
-                        }}
-                        okText="Oui"
-                        cancelText="Non"
-                      >
-                        <Button danger icon={<DeleteOutlined />}>
-                          Supprimer
-                        </Button>
-                      </Popconfirm>
+  <Popconfirm
+    title="Confirmer la suppression"
+    onConfirm={() => { handleDelete(selectedOrder.id); closeDrawer(); }}
+    okText="Oui" cancelText="Non"
+  >
+    <Button danger icon={<DeleteOutlined />}>Supprimer</Button>
+  </Popconfirm>
 
-                      <NavLink to={`/commandeclients/${selectedOrder.id}`} onClick={() => closeDrawer()}>
-                        <Button type="primary" icon={<EditOutlined />}>
-                          Éditer
-                        </Button>
-                      </NavLink>
-                    </div>
+  <NavLink to={`/commandeclients/${selectedOrder.id}`} onClick={() => closeDrawer()}>
+    <Button type="primary" icon={<EditOutlined />}>Éditer</Button>
+  </NavLink>
+</div>
                   </>
                 );
               })()}
