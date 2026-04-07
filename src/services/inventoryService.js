@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const API_URL = 'http://localhost:5273/api'; 
-const API_URL = "https://inventorymanagementapi-0f3a.onrender.com/api";
+const API_URL = "http://187.124.210.239:8080/api";
 
 
 const inventoryService = {
