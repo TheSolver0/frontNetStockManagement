@@ -2,36 +2,35 @@
 import { Button, Card, Checkbox, Col, Form, Input, message, Row, Typography } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../services/api';
+import axiosInstance from '../services/axiosInstance';
 
-const loginUrl = `${API_URL}auth/login/`;
+const loginUrl = `${API_URL}auth/login`;
 
 const onFinish = async (values) => {
   const { email, password } = values;
 
   try {
-    const response = await axios.post(loginUrl, {
-      email,
-      password,
-    });
+    const response = await axiosInstance.post('auth/login', { email, password });
+    
+    console.log('Réponse complète:', response.data); //  debug
 
-    const token = response.data.token || response.data.access;
-    if (token) {
-      localStorage.setItem('accessToken', token);
+    const { success, token, user, message: msg } = response.data;
+
+    if (!success || !token) {
+      message.error(msg || 'Connexion échouée.');
+      return;
     }
 
-    if (response.data.refresh) {
-      localStorage.setItem('refreshToken', response.data.refresh);
-    }
+    localStorage.setItem('accessToken', token);
+    if (user) localStorage.setItem('user', JSON.stringify(user));
 
-    if (response.data.user) {
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-
-    message.success(response.data.message || 'Connexion réussie !');
+    message.success(msg || 'Connexion réussie !');
     window.location.href = '/dashboard';
+
   } catch (error) {
-    message.error('Erreur de connexion. Vérifiez vos identifiants et réessayez.');
-    console.error('Erreur lors de la connexion', error);
+    const msg = error.response?.data?.message || 'Erreur de connexion.';
+    message.error(msg);
+    console.error('Erreur:', error.response?.data);
   }
 };
 

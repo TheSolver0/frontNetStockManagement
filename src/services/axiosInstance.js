@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const baseURL = 'http://localhost:5273/api'; // à adapter selon ton API
+const baseURL = 'http://localhost:5273/api'; 
+// const baseURL = "https://api.kftech237.com/api/";
+
 
 const axiosInstance = axios.create({
   baseURL: baseURL,
@@ -44,7 +46,7 @@ axiosInstance.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         console.log('🔄 Tentative de refresh avec token:', refreshToken ? 'présent' : 'absent');
         
-        const response = await axios.post(`${baseURL}/auth/refresh/`, {
+        const response = await axios.post(`${baseURL}auth/refresh/`, {
           refresh: refreshToken
         });
 

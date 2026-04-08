@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink } from "react-router-dom";
-import { Button, Card, Col, Row, Form, Input, InputNumber, Modal, Select, Popconfirm, message, Table, Tag, Space, Typography, Flex, Grid, Drawer, Descriptions } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
+import {
+    Button, Card, Col, Row, Form, Input, InputNumber, Modal,
+    Select, Popconfirm, message, Tag, Space, Typography, Flex,
+    Grid, Drawer, Descriptions, Upload
+} from 'antd';
+import {
+    PlusOutlined, EditOutlined, DeleteOutlined,
+    QuestionCircleOutlined, CaretUpOutlined, CaretDownOutlined
+} from '@ant-design/icons';
 import {
     useReactTable,
     getCoreRowModel,
-    getFilteredRowModel,
     getSortedRowModel,
     getPaginationRowModel,
     flexRender,
@@ -13,6 +19,24 @@ import {
 import { getProduits, getCategories, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 
+// ─── Miniature produit ────────────────────────────────────────────────────────
+const ProductImage = ({ src, name, size = 40 }) =>
+    src ? (
+        <img
+            src={src}
+            alt={name}
+            style={{ width: size, height: size, objectFit: 'cover', borderRadius: 6 }}
+        />
+    ) : (
+        <div style={{
+            width: size, height: size, borderRadius: 6,
+            background: 'var(--color-background-secondary)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: size * 0.45,
+        }}>📦</div>
+    );
+
+// ─── Formulaire d'ajout ───────────────────────────────────────────────────────
 const AddProductForm = ({ open, onCancel, onProductAdded }) => {
     const [form] = Form.useForm();
     const [categories, setCategories] = useState([]);
@@ -22,23 +46,35 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
         if (open) {
             getCategories()
                 .then(setCategories)
-                .catch(error => console.error("Erreur lors du chargement des catégories :", error));
+                .catch(err => console.error("Erreur catégories :", err));
         }
     }, [open]);
 
     const handleFinish = async (values) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.post(`${API_URL}Products/`, {
-                ...values,
-                categoryId: parseInt(values.categoryId, 10),
+            const fd = new FormData();
+            fd.append('name', values.name);
+            fd.append('desc', values.desc ?? '');
+            fd.append('categoryId', parseInt(values.categoryId, 10));
+            fd.append('price', values.price);
+            fd.append('quantity', values.quantity);
+            fd.append('threshold', values.threshold);
+            if (values.sku) fd.append('sku', values.sku);
+            if (values.location) fd.append('location', values.location);
+            // Ant Design Upload stocke le fichier dans .file quand beforeUpload retourne false
+            if (values.image?.file) fd.append('image', values.image.file);
+
+            const response = await axiosInstance.post(`${API_URL}Products/`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
+
             message.success("Produit ajouté avec succès !");
             form.resetFields();
             onProductAdded(response.data);
         } catch (error) {
-            message.error("Erreur lors de l’ajout du produit !");
-            console.error('Erreur lors de l’ajout', error);
+            message.error("Erreur lors de l'ajout du produit !");
+            console.error('Erreur ajout :', error);
         } finally {
             setLoading(false);
         }
@@ -53,38 +89,90 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
             confirmLoading={loading}
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} name="addProductForm">
-                <Form.Item name="name" label="Nom du produit" rules={[{ required: true, message: 'Veuillez entrer le nom du produit' }]}>
+                <Form.Item
+                    name="image"
+                    label="Image du produit"
+                >
+                    <Upload beforeUpload={() => false} maxCount={1} listType="picture" accept="image/*">
+                        <Button icon={<PlusOutlined />}>Choisir une image</Button>
+                    </Upload>
+                </Form.Item>
+
+                <Form.Item
+                    name="name"
+                    label="Nom du produit"
+                    rules={[{ required: true, message: 'Veuillez entrer le nom du produit' }]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item name="desc" label="Description" rules={[{ required: true, message: 'Veuillez entrer une description' }]}>
+
+                <Form.Item
+                    name="desc"
+                    label="Description"
+                    rules={[{ required: true, message: 'Veuillez entrer une description' }]}
+                >
                     <Input.TextArea rows={3} />
                 </Form.Item>
+
                 <Row gutter={16}>
                     <Col span={12}>
-                        <Form.Item name="categoryId" label="Catégorie" rules={[{ required: true, message: 'Veuillez sélectionner une catégorie' }]}>
+                        <Form.Item
+                            name="categoryId"
+                            label="Catégorie"
+                            rules={[{ required: true, message: 'Veuillez sélectionner une catégorie' }]}
+                        >
                             <Select placeholder="Sélectionner une catégorie">
-                                {categories.map(cat => <Select.Option key={cat.id} value={cat.id}>{cat.title}</Select.Option>)}
+                                {categories.map(cat => (
+                                    <Select.Option key={cat.id} value={cat.id}>{cat.title}</Select.Option>
+                                ))}
                             </Select>
                         </Form.Item>
                     </Col>
                     <Col span={12}>
-                        <Form.Item name="price" label="Prix unitaire (XAF)" rules={[{ required: true, type: 'number', min: 0, message: 'Prix invalide' }]}>
+                        <Form.Item
+                            name="price"
+                            label="Prix unitaire (XAF)"
+                            rules={[{ required: true, type: 'number', min: 0, message: 'Prix invalide' }]}
+                        >
                             <InputNumber style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                 </Row>
+
                 <Row gutter={16}>
                     <Col span={12}>
-                        <Form.Item name="quantity" label="Quantité en stock" rules={[{ required: true, type: 'number', min: 0, message: 'Quantité invalide' }]}>
+                        <Form.Item
+                            name="quantity"
+                            label="Quantité en stock"
+                            rules={[{ required: true, type: 'number', min: 0, message: 'Quantité invalide' }]}
+                        >
                             <InputNumber style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
-                        <Form.Item name="threshold" label="Seuil d'alerte" rules={[{ required: true, type: 'number', min: 0, message: 'Seuil invalide' }]}>
+                        <Form.Item
+                            name="threshold"
+                            label="Seuil d'alerte"
+                            rules={[{ required: true, type: 'number', min: 0, message: 'Seuil invalide' }]}
+                        >
                             <InputNumber style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                 </Row>
+
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <Form.Item name="sku" label="SKU">
+                            <Input />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="location" label="Emplacement">
+                            <Input />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
                 <Form.Item>
                     <Button type="primary" htmlType="submit" loading={loading} block>
                         Ajouter le produit
@@ -95,8 +183,9 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
     );
 };
 
+// ─── Page principale ──────────────────────────────────────────────────────────
 export function Produits() {
-   const [produits, setProduits] = useState([]);
+    const [produits, setProduits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -115,22 +204,30 @@ export function Produits() {
                     }
                 });
             })
-            .catch(error => console.error("Erreur lors du chargement des produits :", error))
+            .catch(err => console.error("Erreur produits :", err))
             .finally(() => setLoading(false));
     }, []);
 
-      const handleDelete = useCallback(async (id) => {
+    const handleDelete = useCallback(async (id) => {
         try {
             await axiosInstance.delete(`${API_URL}Products/${id}/`);
             message.success('Produit supprimé avec succès');
             setProduits(prev => prev.filter(p => p.id !== id));
-        } catch (error) {
+        } catch {
             message.error("Erreur lors de la suppression du produit !");
         }
     }, []);
 
     const columnsRT = useMemo(() => [
         { header: 'ID', accessorKey: 'id' },
+        {
+            header: 'Image',
+            accessorKey: 'imageUrl',
+            enableSorting: false,
+            cell: ({ row }) => (
+                <ProductImage src={row.original.imageUrl} name={row.original.name} size={40} />
+            ),
+        },
         { header: 'Nom', accessorKey: 'name' },
         {
             header: 'Stock',
@@ -152,6 +249,7 @@ export function Produits() {
         {
             header: 'Actions',
             id: 'actions',
+            enableSorting: false,
             cell: ({ row }) => (
                 <Space size="middle">
                     <NavLink to={`/produit/${row.original.id}`}>
@@ -176,22 +274,13 @@ export function Produits() {
         produits.filter(item =>
             item.name.toLowerCase().includes(searchTerm.toLowerCase())
         ),
-    [produits, searchTerm]);
+        [produits, searchTerm]
+    );
 
     const screens = Grid.useBreakpoint();
-    // const [drawerVisible, setDrawerVisible] = useState(false);
-    // const [selectedProduct, setSelectedProduct] = useState(null);
 
-    const openProduct = (p) => {
-        setSelectedProduct(p);
-        setDrawerVisible(true);
-    };
-
+    const openProduct = (p) => { setSelectedProduct(p); setDrawerVisible(true); };
     const closeDrawer = () => setDrawerVisible(false);
-
-    // const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
-
-    
 
     const table = useReactTable({
         data: filteredData,
@@ -213,6 +302,7 @@ export function Produits() {
                         Ajouter un produit
                     </Button>
                 </Flex>
+
                 <Input.Search
                     placeholder="Rechercher un produit..."
                     onSearch={setSearchTerm}
@@ -220,6 +310,7 @@ export function Produits() {
                     style={{ marginBottom: 16, maxWidth: 300 }}
                     allowClear
                 />
+
                 {screens.lg ? (
                     <div className="table-responsive">
                         <table className="table table-hover responsive-table">
@@ -228,15 +319,19 @@ export function Produits() {
                                 {table.getHeaderGroups().map(hg => (
                                     <tr key={hg.id}>
                                         {hg.headers.map(header => (
-                                            <th key={header.id} style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }} onClick={header.column.getToggleSortingHandler()}>
+                                            <th
+                                                key={header.id}
+                                                style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                                                onClick={header.column.getToggleSortingHandler()}
+                                            >
                                                 {flexRender(header.column.columnDef.header, header.getContext())}
                                                 {header.column.getCanSort() && (
-    header.column.getIsSorted() === 'asc'
-        ? <CaretUpOutlined />
-        : header.column.getIsSorted() === 'desc'
-            ? <CaretDownOutlined />
-            : null
-)}
+                                                    header.column.getIsSorted() === 'asc'
+                                                        ? <CaretUpOutlined />
+                                                        : header.column.getIsSorted() === 'desc'
+                                                            ? <CaretDownOutlined />
+                                                            : null
+                                                )}
                                             </th>
                                         ))}
                                     </tr>
@@ -244,11 +339,17 @@ export function Produits() {
                             </thead>
                             <tbody>
                                 {table.getRowModel().rows.map(row => (
-                                    <tr key={row.id}>{row.getVisibleCells().map(cell => <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>)}</tr>
+                                    <tr key={row.id}>
+                                        {row.getVisibleCells().map(cell => (
+                                            <td key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </td>
+                                        ))}
+                                    </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
+                        <div style={{ marginTop: '1rem', display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Précédent</Button>
                             <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Suivant</Button>
                             <span>Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
@@ -257,23 +358,43 @@ export function Produits() {
                 ) : (
                     <>
                         <div className="responsive-cards">
-                            {filteredData.length === 0 && <div style={{ padding: 20, textAlign: 'center' }}>Aucun produit</div>}
+                            {filteredData.length === 0 && (
+                                <div style={{ padding: 20, textAlign: 'center' }}>Aucun produit</div>
+                            )}
                             {filteredData.map(product => (
                                 <Card
                                     key={product.id}
                                     className="mobile-card"
                                     size="small"
-                                    variant='outlined'
+                                    variant="outlined"
                                     hoverable
                                     onClick={() => openProduct(product)}
                                 >
+                                    {/* Image produit en haut de la carte */}
+                                    {product.imageUrl && (
+                                        <img
+                                            src={product.imageUrl}
+                                            alt={product.name}
+                                            style={{
+                                                width: '100%', height: 120, objectFit: 'cover',
+                                                borderRadius: 'var(--border-radius-md)', marginBottom: 8,
+                                            }}
+                                        />
+                                    )}
+
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                         <div style={{ fontWeight: 700 }}>{product.name}</div>
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <Popconfirm title="Confirmer la suppression" onConfirm={() => handleDelete(product.id)} okText="Oui" cancelText="Non">
-                                                <Button size="small" danger onClick={(e) => e.stopPropagation()}><DeleteOutlined /></Button>
+                                            <Popconfirm
+                                                title="Confirmer la suppression"
+                                                onConfirm={() => handleDelete(product.id)}
+                                                okText="Oui"
+                                                cancelText="Non"
+                                            >
+                                                <Button size="small" danger onClick={(e) => e.stopPropagation()}>
+                                                    <DeleteOutlined />
+                                                </Button>
                                             </Popconfirm>
-
                                             <NavLink to={`/produit/${product.id}`} onClick={(e) => e.stopPropagation()}>
                                                 <Button size="small" type="primary"><EditOutlined /></Button>
                                             </NavLink>
@@ -299,30 +420,45 @@ export function Produits() {
                             width={Math.min(520, window.innerWidth - 40)}
                         >
                             {selectedProduct && (
-                                <Descriptions column={1} size="small">
-                                    <Descriptions.Item label="Nom">{selectedProduct.name}</Descriptions.Item>
-                                    <Descriptions.Item label="Description">{selectedProduct.desc}</Descriptions.Item>
-                                    <Descriptions.Item label="Prix">{selectedProduct.price?.toLocaleString()} XAF</Descriptions.Item>
-                                    <Descriptions.Item label="Quantité">{selectedProduct.quantity}</Descriptions.Item>
-                                    <Descriptions.Item label="Seuil">{selectedProduct.threshold}</Descriptions.Item>
-                                </Descriptions>
-                            )}
+                                <>
+                                    {/* Image dans le drawer */}
+                                    {selectedProduct.imageUrl && (
+                                        <img
+                                            src={selectedProduct.imageUrl}
+                                            alt={selectedProduct.name}
+                                            style={{
+                                                width: '100%', maxHeight: 200, objectFit: 'cover',
+                                                borderRadius: 'var(--border-radius-md)', marginBottom: 16,
+                                            }}
+                                        />
+                                    )}
+                                    <Descriptions column={1} size="small">
+                                        <Descriptions.Item label="Nom">{selectedProduct.name}</Descriptions.Item>
+                                        <Descriptions.Item label="Description">{selectedProduct.desc}</Descriptions.Item>
+                                        <Descriptions.Item label="Prix">{selectedProduct.price?.toLocaleString()} XAF</Descriptions.Item>
+                                        <Descriptions.Item label="Quantité">{selectedProduct.quantity}</Descriptions.Item>
+                                        <Descriptions.Item label="Seuil">{selectedProduct.threshold}</Descriptions.Item>
+                                    </Descriptions>
 
-                            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                                {selectedProduct && (
-                                    <>
-                                        <Popconfirm title="Confirmer la suppression" onConfirm={() => { handleDelete(selectedProduct.id); closeDrawer(); }} okText="Oui" cancelText="Non">
+                                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                                        <Popconfirm
+                                            title="Confirmer la suppression"
+                                            onConfirm={() => { handleDelete(selectedProduct.id); closeDrawer(); }}
+                                            okText="Oui"
+                                            cancelText="Non"
+                                        >
                                             <Button danger>Supprimer</Button>
                                         </Popconfirm>
-                                        <NavLink to={`/produit/${selectedProduct.id}`} onClick={() => closeDrawer()}>
+                                        <NavLink to={`/produit/${selectedProduct.id}`} onClick={closeDrawer}>
                                             <Button type="primary">Éditer</Button>
                                         </NavLink>
-                                    </>
-                                )}
-                            </div>
+                                    </div>
+                                </>
+                            )}
                         </Drawer>
                     </>
-                )}            </Card>
+                )}
+            </Card>
 
             <AddProductForm
                 open={isModalOpen}
