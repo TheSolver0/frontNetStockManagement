@@ -124,13 +124,16 @@ function Root() {
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
     try {
-      await axiosInstance.post('/auth/logout/', { refresh: refreshToken });
+      if (refreshToken) {
+        await axiosInstance.post('/auth/logout/', { refresh: refreshToken });
+      }
+    } catch (error) {
+      console.error('Logout failed', error);
+    } finally {
+      // On vide le stockage et on redirige quoi qu'il arrive
       localStorage.clear();
       message.success("Déconnexion réussie !");
       navigate('/login');
-    } catch (error) {
-      console.error('Logout failed', error);
-      message.error("La déconnexion a échoué.");
     }
   };
   

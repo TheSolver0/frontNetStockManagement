@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿﻿import React from 'react';
 import { Button, Card, Checkbox, Col, Form, Input, message, Row, Typography } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../services/api';
@@ -14,7 +14,7 @@ const onFinish = async (values) => {
     
     console.log('Réponse complète:', response.data); //  debug
 
-    const { success, token, user, message: msg } = response.data;
+    const { success, token, refresh, user, message: msg } = response.data;
 
     if (!success || !token) {
       message.error(msg || 'Connexion échouée.');
@@ -22,6 +22,7 @@ const onFinish = async (values) => {
     }
 
     localStorage.setItem('accessToken', token);
+    if (refresh) localStorage.setItem('refreshToken', refresh);
     if (user) localStorage.setItem('user', JSON.stringify(user));
 
     message.success(msg || 'Connexion réussie !');
