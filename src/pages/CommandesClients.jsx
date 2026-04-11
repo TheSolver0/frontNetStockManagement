@@ -53,6 +53,7 @@ import axiosInstance from '../services/axiosInstance';
 import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoUrl from '../assets/images/logoKFTech.jpg'; 
 
 // Modal pour ajouter une commande
 const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
@@ -268,100 +269,261 @@ export function CommandesClients() {
   return { total: commandes.length, enAttente, livrees, totalMontant };
 }, [commandes]);
 
+const fmtXAF = (value) =>
+  parseFloat(value || 0)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') // espace simple comme séparateur milliers
+    .replace('.', ',')                        // virgule décimale à la française
+    + ' XAF';
+
 const downloadInvoicePDF = useCallback((order) => {
   const doc = new jsPDF();
   const config = getStatusConfig(order.status);
-  const dateStr = new Date().toLocaleDateString('fr-FR', {
-    year: 'numeric', month: 'long', day: 'numeric'
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR', {
+    year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // ── En-tête ──────────────────────────────────────────
-  doc.setFillColor(22, 119, 255);
-  doc.rect(0, 0, 210, 35, 'F');
+  const C = {
+    navy:    [10,  30,  80],
+    blue:    [22, 119, 255],
+    blueLight:[235,243,255],
+    gold:    [212,175, 55],
+    dark:    [25,  25,  35],
+    mid:     [100,105,120],
+    light:   [248,249,252],
+    border:  [215,220,235],
+    white:   [255,255,255],
+  };
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
-  doc.text('FACTURE', 14, 22);
+  const W = 210;   // largeur page mm
+  const MARGIN = 14;
 
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`N° ${order.id}`, 140, 15);
-  doc.text(`Date : ${dateStr}`, 140, 22);
+  // ── 1. Fond header dégradé simulé ──────────────────────────────────────────
+  // Bande principale
+  doc.setFillColor(...C.navy);
+  doc.rect(0, 0, W, 42, 'F');
 
-  // Statut
-  doc.setFontSize(10);
-  doc.text(`Statut : ${config.label}`, 140, 29);
+  // Accent doré (bande fine en bas du header)
+  doc.setFillColor(...C.gold);
+  doc.rect(0, 42, W, 2, 'F');
 
-  // ── Infos client ─────────────────────────────────────
-  doc.setTextColor(50, 50, 50);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Facturé à :', 14, 48);
+  // Carré décoratif (cercle tronqué coin droit) — effet géométrique
+  doc.setFillColor(22, 60, 120);
+  doc.circle(W - 10, -5, 38, 'F');
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(order.customer?.name || '-', 14, 56);
-  if (order.customer?.email) doc.text(order.customer.email, 14, 63);
-  if (order.customer?.telephone) doc.text(`Tél : ${order.customer.telephone}`, 14, 70);
-  if (order.customer?.address) {
-    const addrLines = doc.splitTextToSize(order.customer.address, 80);
-    doc.text(addrLines, 14, 77);
+  // ── 2. Logo + nom entreprise ───────────────────────────────────────────────
+  try {
+    doc.addImage(logoUrl, 'JPEG', MARGIN, 7, 24, 24);
+  } catch (_) {
+    // fallback : carré placeholder si logo absent
+    doc.setFillColor(...C.gold);
+    doc.roundedRect(MARGIN, 7, 24, 24, 3, 3, 'F');
+    doc.setTextColor(...C.navy);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LOGO', MARGIN + 12, 22, { align: 'center' });
   }
 
-  // ── Tableau des articles ──────────────────────────────
+  doc.setTextColor(...C.white);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('KF TECH', MARGIN + 28, 18);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(190, 205, 235);
+  doc.text('Solutions Informatiques & Gestion', MARGIN + 28, 24);
+
+  // ── 3. Titre FACTURE + numéro (aligné à droite) ───────────────────────────
+  doc.setTextColor(...C.white);
+  doc.setFontSize(26);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FACTURE', W - MARGIN, 19, { align: 'right' });
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(190, 205, 235);
+  doc.text(`N° ${order.id}`, W - MARGIN, 27, { align: 'right' });
+  doc.text(`Émise le ${dateStr}`, W - MARGIN, 33, { align: 'right' });
+
+  // ── 4. Bandeau statut ────────────────────────────────────────────────────
+  const statusColors = {
+    paid:      [0, 150, 100],
+    pending:   [200, 120, 0],
+    cancelled: [180, 40, 40],
+  };
+  const sCx = statusColors[order.status] ?? [80, 80, 80];
+  doc.setFillColor(...sCx);
+  doc.roundedRect(MARGIN, 50, 55, 10, 2, 2, 'F');
+  doc.setTextColor(...C.white);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`● ${config.label.toUpperCase()}`, MARGIN + 4, 56.5);
+
+  // ── 5. Deux colonnes : Facturé à / Détails commande ──────────────────────
+  const colA = MARGIN;
+  const colB = 115;
+  const rowStart = 68;
+
+  // Carte Facturé à
+  doc.setFillColor(...C.blueLight);
+  doc.roundedRect(colA, rowStart, 90, 42, 3, 3, 'F');
+  doc.setDrawColor(...C.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(colA, rowStart, 90, 42, 3, 3, 'S');
+
+  doc.setFillColor(...C.blue);
+  doc.roundedRect(colA, rowStart, 90, 8, 3, 3, 'F');
+  doc.rect(colA, rowStart + 4, 90, 4, 'F'); // coin bas carré
+
+  doc.setTextColor(...C.white);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FACTURÉ À', colA + 5, rowStart + 5.5);
+
+  doc.setTextColor(...C.dark);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(order.customer?.name || '-', colA + 5, rowStart + 16);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...C.mid);
+  let cy = rowStart + 22;
+  if (order.customer?.email) {
+    doc.text(`✉  ${order.customer.email}`, colA + 5, cy); cy += 6;
+  }
+  if (order.customer?.telephone) {
+    doc.text(`✆  ${order.customer.telephone}`, colA + 5, cy); cy += 6;
+  }
+  if (order.customer?.address) {
+    const lines = doc.splitTextToSize(order.customer.address, 78);
+    doc.text(lines, colA + 5, cy);
+  }
+
+  // Carte Détails commande
+  doc.setFillColor(...C.light);
+  doc.roundedRect(colB, rowStart, 81, 42, 3, 3, 'F');
+  doc.setDrawColor(...C.border);
+  doc.roundedRect(colB, rowStart, 81, 42, 3, 3, 'S');
+
+  doc.setFillColor(...C.navy);
+  doc.roundedRect(colB, rowStart, 81, 8, 3, 3, 'F');
+  doc.rect(colB, rowStart + 4, 81, 4, 'F');
+
+  doc.setTextColor(...C.white);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DÉTAILS COMMANDE', colB + 5, rowStart + 5.5);
+
+  const details = [
+    ['N° Commande',  `#${order.id}`],
+    ['Date',          dateStr],
+    ['Produit',       order.product?.name || '-'],
+    ['Quantité',      String(order.quantity ?? '-')],
+  ];
+  details.forEach(([label, value], i) => {
+    const y = rowStart + 15 + i * 7;
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C.mid);
+    doc.text(label, colB + 5, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.dark);
+    doc.text(value, colB + 76, y, { align: 'right' });
+}, [getStatusConfig]);
+
+  // ── 6. Tableau articles ───────────────────────────────────────────────────
   autoTable(doc, {
-    startY: 95,
-    head: [['Désignation', 'Quantité', 'Prix unitaire (XAF)', 'Montant total (XAF)']],
+    startY: 118,
+    head: [['#', 'Désignation', 'Qté', 'Prix unitaire (XAF)', 'Total (XAF)']],
     body: [[
+      '01',
       order.product?.name || '-',
       order.quantity,
-      parseFloat(order.product?.price || 0).toLocaleString('fr-FR'),
-      parseFloat(order.amount || 0).toLocaleString('fr-FR'),
+      fmtXAF(order.product?.price),
+      fmtXAF(order.amount)
     ]],
     headStyles: {
-      fillColor: [22, 119, 255],
-      textColor: 255,
+      fillColor: C.navy,
+      textColor: C.white,
       fontStyle: 'bold',
-      fontSize: 11,
+      fontSize: 9,
+      cellPadding: 5,
     },
-    bodyStyles: { fontSize: 11 },
-    alternateRowStyles: { fillColor: [240, 245, 255] },
+    bodyStyles: {
+      fontSize: 10,
+      cellPadding: 5,
+      textColor: C.dark,
+    },
+    alternateRowStyles: { fillColor: C.blueLight },
     columnStyles: {
-      0: { cellWidth: 70 },
-      1: { halign: 'center' },
-      2: { halign: 'right' },
-      3: { halign: 'right', fontStyle: 'bold' },
-    },
-    margin: { left: 14, right: 14 },
+  0: { cellWidth: 12, halign: 'center', textColor: C.mid },
+  1: { cellWidth: 68 },                          // ← réduit
+  2: { cellWidth: 16, halign: 'center' },        // ← réduit
+  3: { cellWidth: 44, halign: 'right' },
+  4: { cellWidth: 44, halign: 'right', fontStyle: 'bold' },
+},
+    margin: { left: MARGIN, right: MARGIN },
+    tableLineColor: C.border,
+    tableLineWidth: 0.2,
   });
 
-  // ── Total ─────────────────────────────────────────────
-  const finalY = doc.lastAutoTable.finalY + 10;
+  // ── 7. Récapitulatif total ────────────────────────────────────────────────
+  const finalY = doc.lastAutoTable.finalY;
 
-  doc.setDrawColor(22, 119, 255);
-  doc.setLineWidth(0.5);
-  doc.line(120, finalY, 196, finalY);
+  // Sous-total
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...C.mid);
+  doc.text('Sous-total HT', 140, finalY + 10);
+  doc.text(fmtXAF(order.amount), W - MARGIN, finalY + 10, { align: 'right' });
 
-  doc.setFontSize(13);
+  // Taxes (exemple 0%)
+  doc.text('Taxes (0%)', 140, finalY + 17);
+  doc.text('0 XAF', W - MARGIN, finalY + 17, { align: 'right' });
+
+  // Séparateur
+  doc.setDrawColor(...C.gold);
+  doc.setLineWidth(0.8);
+  doc.line(135, finalY + 21, W - MARGIN, finalY + 21);
+
+  // Bloc TOTAL
+  doc.setFillColor(...C.navy);
+  doc.roundedRect(130, finalY + 24, W - MARGIN - 130, 14, 2, 2, 'F');
+
+  doc.setTextColor(...C.white);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(22, 119, 255);
-  doc.text('TOTAL :', 125, finalY + 9);
+  doc.text('TOTAL TTC', 136, finalY + 33);
+  doc.setTextColor(...C.gold);
   doc.text(
     `${parseFloat(order.amount || 0).toLocaleString('fr-FR')} XAF`,
-    196, finalY + 9,
-    { align: 'right' }
+    W - MARGIN - 3, finalY + 33, { align: 'right' }
   );
 
-  // ── Pied de page ─────────────────────────────────────
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(150, 150, 150);
-  doc.text('Merci pour votre commande.', 105, 285, { align: 'center' });
-  doc.line(14, 280, 196, 280);
+  // ── 8. Note de bas de page ────────────────────────────────────────────────
+  doc.setDrawColor(...C.border);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, 272, W - MARGIN, 272);
 
-  // ── Téléchargement ───────────────────────────────────
-  doc.save(`facture-commande-${order.id}.pdf`);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(...C.mid);
+  doc.text('Merci pour votre confiance. Pour toute question, contactez-nous à support@kftech237.com', 105, 277, { align: 'center' });
+
+  // Bande finale décorative
+  doc.setFillColor(...C.navy);
+  doc.rect(0, 285, W, 12, 'F');
+  doc.setFillColor(...C.gold);
+  doc.rect(0, 285, W, 1.5, 'F');
+  doc.setTextColor(190, 205, 235);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('KF TECH  •  Solutions Informatiques  •  Douala, Cameroun  •  www.kftech237.com', 105, 291, { align: 'center' });
+
+  doc.save(`facture-${order.id}.pdf`);
 }, [getStatusConfig]);
 
   // Colonnes pour React Table

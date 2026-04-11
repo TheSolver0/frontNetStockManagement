@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autotable from 'jspdf-autotable';
+import logoUrl from '../assets/images/logoKFTech.jpg';
 
 class PDFService {
   // ─── Palette ───────────────────────────────────────────────────────────────
@@ -18,8 +19,8 @@ class PDFService {
   };
 
   // ─── URL du logo — remplacez ici ───────────────────────────────────────────
-  static LOGO_URL = '../assets/images/logoKFTech.jpg'; // chemin vers votre logo (png recommandé pour la transparence)
-  static SHOP_NAME = 'Nom de la Boutique';
+  static LOGO_URL = logoUrl; // chemin vers votre logo (png recommandé pour la transparence)
+  static SHOP_NAME = 'KF Tech 237';
   static SHOP_SUBTITLE = 'Gestion des inventaires';
 
   // ─── Créer le doc ──────────────────────────────────────────────────────────

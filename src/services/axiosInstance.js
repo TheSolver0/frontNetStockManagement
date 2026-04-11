@@ -38,6 +38,9 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     console.error('❌ Erreur API:', error.response?.status, error.response?.statusText, originalRequest?.url);
     console.error('Détails erreur:', error.response?.data);
+    console.error('Détails erreur (stringify):', JSON.stringify(error.response?.data));
+  console.error('Status:', error.response?.status);
+  console.error('Headers:', error.response?.headers);
 
     // Si token expiré
     if (error.response?.status === 401 && !originalRequest._retry) {

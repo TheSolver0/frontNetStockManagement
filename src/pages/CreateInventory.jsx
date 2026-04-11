@@ -8,23 +8,21 @@ import { message } from 'antd';
 const CreateInventory = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({
-    type: 0,
-    categoryIds: [],
-    userId: 'user_' + Date.now(), // A Remplacer par l'ID utilisateur réel si disponible
-    notes: ''
-  });
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+const [formData, setFormData] = useState({
+  type: 0,
+  categoryIds: [],
+  userId: String(currentUser?.id || currentUser?.userId || ''),
+  notes: ''
+});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-      if (open) {
-        Promise.all([getCategories()])
-          .then(([categoriesData]) => {
-            setCategories(categoriesData);
-          })
-          .catch(error => console.error("Erreur lors du chargement des données :", error));
-      }
-    }, [open]);
+  getCategories()
+    .then(data => setCategories(data))
+    .catch(error => console.error("Erreur chargement catégories:", error));
+}, []);
 
 
   const handleSubmit = async (e) => {
@@ -36,6 +34,9 @@ const CreateInventory = () => {
       message.success(`Inventaire créé : ${session.reference}`);
       navigate(`/inventory/${session.id}/count`);
     } catch (error) {
+       console.error('Erreur complète:', error.response?.data);
+    console.error('Validation errors:', JSON.stringify(error.response?.data?.errors, null, 2));
+    message.error('Erreur lors de la création de l\'inventaire');
       console.error('Erreur lors de la création:', error);
       message.error('Erreur lors de la création de l\'inventaire');
     } finally {
