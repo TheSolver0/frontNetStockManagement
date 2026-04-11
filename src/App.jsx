@@ -66,6 +66,7 @@ const App = () => (
         { path: '/inventory/new', element: <CreateInventory /> },
         { path: '/inventory/:sessionId/count', element: <InventoryCount /> },
         { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
+        { path: '/parametres', element: <Parametres /> },
       ],
     }
   ])} />
@@ -154,7 +155,8 @@ function Root() {
     // { key: '/inventory/new', icon: <SettingOutlined />, label: <NavLink to="/inventory/new">Nouvel Inventaire</NavLink> },
     // { key: '/inventory/:sessionId/count', icon: <SettingOutlined />, label: <NavLink to="/inventory/:sessionId/count">Comptage Inventaire</NavLink> },
 
-    ...(user?.is_superuser ? [{ key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> }] : []),
+    { key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> },
+    // ...(user?.is_superuser ? [{ key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> }] : []),
   ];
 
   return (

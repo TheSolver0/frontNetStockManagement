@@ -10,12 +10,10 @@ import {
     QuestionCircleOutlined,
     CaretUpOutlined,
     CaretDownOutlined,
-
 } from '@ant-design/icons';
 import ResponsiveTable from '../components/ResponsiveTable';
-import DataTable from 'datatables.net-dt';
 import { getProduits, getUsers } from "../services/api.js";
-import { getCategories } from "../services/api.js";
+import { getCategories, API_URL } from "../services/api.js"; // ✅ Importer API_URL
 
 import {
     useReactTable,
@@ -26,8 +24,6 @@ import {
     flexRender,
 } from '@tanstack/react-table';
 
-import axios from "axios";
-import Password from 'antd/es/input/Password';
 import axiosInstance from '../services/axiosInstance';
 
 
@@ -37,9 +33,6 @@ function AjouterUser({ onUserAdded }) {
 
     const [form] = Form.useForm();
 
-
-
-
     const layout = {
         labelCol: { span: 8 },
         wrapperCol: { span: 16 },
@@ -54,148 +47,150 @@ function AjouterUser({ onUserAdded }) {
             range: '${label} must be between ${min} and ${max}',
         },
     };
+
     const onFinish = async (values) => {
-        const { nom, email, password } = values;
-        console.log(values);
+    const { username, email, password, confirmPassword } = values;
 
-        try {
-            const response = await axiosInstance.post('http://localhost:8000/auth/register/', {
-                email,
-                password,
-                nom,
-                role: "GERANT",
-            });
+    try {
+        const response = await axiosInstance.post(`${API_URL}Auth/register`, {
+            email,
+            password,
+            confirmPassword,
+            username,
+           
+        });
 
-            message.success("User ajouté avec succès !");
-            form.resetFields();
-            onProduitAdded(response.data);
+        message.success("Utilisateur ajouté avec succès !");
+        form.resetFields();
+        onUserAdded(response.data);
 
-            console.log('Produit ajouté :', response.data);
-        } catch (error) {
-            message.error("Erreur lors de l’ajout de l'user !");
-            console.error('Erreur lors de l’ajout', error);
-        }
-    };
+    } catch (error) {
+        message.error("Erreur lors de l'ajout de l'utilisateur !");
+        console.error("Erreur lors de l'ajout", error);
+    }
+};
 
-
-
-
-
-    return (<Form
-        {...layout}
-        name="nest-messages"
-        onFinish={onFinish}
-        style={{ maxWidth: 600 }}
-        validateMessages={validateMessages}
-        form={form}
-    >
-        <fieldset>
-            <legend> <h5>Ajouter un User</h5> </legend>
-            <Form.Item name='nom' label="Nom" rules={[{ required: true }]} >
-                <Input />
-            </Form.Item>
-            <Form.Item name='email' label="Email" rules={[{ required: true }]} >
-                <Input />
-            </Form.Item>
-            <Form.Item
-                label="Password"
-                name="password"
-                rules={[{ required: true, message: 'Veuillez entrer votre mot de passe!' }]}
-            >
-                <Input.Password />
-            </Form.Item>
-
-            <Form.Item label={null}>
-                <Button type="primary" htmlType="submit" >
-                    Enregistrer User
-                </Button>
-            </Form.Item>
-        </fieldset>
-
-    </Form>
+    return (
+        <Form
+            {...layout}
+            name="ajouter-user"
+            onFinish={onFinish}
+            style={{ maxWidth: 600 }}
+            validateMessages={validateMessages}
+            form={form}
+        >
+            <fieldset>
+                <legend><h5>Ajouter un Utilisateur</h5></legend>
+               <Form.Item name='username' label="Nom d'utilisateur" rules={[{ required: true }]}>
+    <Input />
+</Form.Item>
+                <Form.Item name='email' label="Email" rules={[{ required: true, type: 'email' }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item
+                    label="Mot de passe"
+                    name="password"
+                    rules={[{ required: true, message: 'Veuillez entrer un mot de passe !' }]}
+                >
+                    <Input.Password />
+                </Form.Item>
+                <Form.Item
+    label="Confirmer mot de passe"
+    name="confirmPassword"
+    dependencies={['password']}
+    rules={[
+        { required: true, message: 'Veuillez confirmer le mot de passe !' },
+        ({ getFieldValue }) => ({
+            validator(_, value) {
+                if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                }
+                return Promise.reject(new Error('Les mots de passe ne correspondent pas !'));
+            },
+        }),
+    ]}
+>
+    <Input.Password />
+</Form.Item>
+                <Form.Item label={null}>
+                    <Button type="primary" htmlType="submit">
+                        Enregistrer Utilisateur
+                    </Button>
+                </Form.Item>
+            </fieldset>
+        </Form>
     );
 }
+
+
 function AjouterCategorie({ onCategorieAdded }) {
 
     const [form] = Form.useForm();
 
-
-
-
     const layout = {
         labelCol: { span: 8 },
         wrapperCol: { span: 16 },
     };
     const validateMessages = {
         required: '${label} is required!',
-        types: {
-            email: '${label} is not a valid email!',
-            number: '${label} is not a valid number!',
-        },
-        number: {
-            range: '${label} must be between ${min} and ${max}',
-        },
     };
+
     const onFinish = async (values) => {
-        const { libelle} = values;
-        console.log(values);
+        const { title } = values;
 
         try {
-            const response = await axiosInstance.post('http://localhost:8000/categories/', {
-               libelle,
+            const response = await axiosInstance.post(`${API_URL}Categories/`, { // ✅ URL corrigée
+                title,
             });
 
-            message.success("Catégorie ajouté avec succès !");
+            message.success("Catégorie ajoutée avec succès !");
             form.resetFields();
             onCategorieAdded(response.data);
 
-            console.log('Catégorie ajoutée :', response.data);
         } catch (error) {
-            message.error("Erreur lors de l’ajout de la catégorie !");
-            console.error('Erreur lors de l’ajout', error);
+            message.error("Erreur lors de l'ajout de la catégorie !");
+            console.error("Erreur lors de l'ajout", error);
         }
     };
 
-
-
-
-
-    return (<Form
-        {...layout}
-        name="nest-messages"
-        onFinish={onFinish}
-        style={{ maxWidth: 600 }}
-        validateMessages={validateMessages}
-        form={form}
-    >
-        <fieldset>
-            <legend> <h5>Ajouter une Categorie</h5> </legend>
-            <Form.Item name='libelle' label="Libellé" rules={[{ required: true }]} >
-                <Input />
-            </Form.Item>
-
-            <Form.Item label={null}>
-                <Button type="primary" htmlType="submit" >
-                    Enregistrer Categorie
-                </Button>
-            </Form.Item>
-        </fieldset>
-
-    </Form>
+    return (
+        <Form
+            {...layout}
+            name="ajouter-categorie"
+            onFinish={onFinish}
+            style={{ maxWidth: 600 }}
+            validateMessages={validateMessages}
+            form={form}
+        >
+            <fieldset>
+                <legend><h5>Ajouter une Catégorie</h5></legend>
+                <Form.Item name='title' label="Libellé" rules={[{ required: true }]}>
+                    <Input />
+                </Form.Item>
+                <Form.Item label={null}>
+                    <Button type="primary" htmlType="submit">
+                        Enregistrer Catégorie
+                    </Button>
+                </Form.Item>
+            </fieldset>
+        </Form>
     );
 }
+
+
 export function Parametres() {
     const [users, setUser] = useState([]);
     const [categories, setCategories] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
+
     useEffect(() => {
         getUsers()
             .then(setUser)
-            .catch((error) => console.error("Erreur lors du chargement des users :", error));
+            .catch((error) => console.error("Erreur lors du chargement des utilisateurs :", error));
         getCategories()
             .then(setCategories)
-            .catch((error) => console.error("Erreur lors du chargement des categories :", error));
+            .catch((error) => console.error("Erreur lors du chargement des catégories :", error));
     }, []);
 
 
@@ -207,8 +202,7 @@ export function Parametres() {
             header: 'Role',
             id: 'is_superuser',
             cell: ({ row }) => {
-                console.log('row', row.original);
-                const role = row.original.is_superuser == 1 ? 'Admin' : 'Gérant'; // == convertit automatiquement
+                const role = row.original.is_superuser == 1 ? 'Admin' : 'Gérant';
                 return role;
             }
         },
@@ -218,25 +212,24 @@ export function Parametres() {
             cell: ({ row }) => (
                 <Flex justify="space-evenly">
                     <Popconfirm
-                        title="Suppression de l'user"
-                        description="Êtes-vous sûr de vouloir supprimer cet user ?"
+                        title="Suppression de l'utilisateur"
+                        description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
                         onConfirm={() => handleDelete(row.original.id)}
                         icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
                     >
                         <Button danger><MinusSquareFilled /></Button>
                     </Popconfirm>
-
-                    <NavLink to={`/produit/${row.original.id}`}>
+                    <NavLink to={`/users/${row.original.id}`}>
                         <Button><EditFilled /></Button>
                     </NavLink>
                 </Flex>
             ),
         },
     ];
+
     const columns2 = [
         { header: 'ID', accessorKey: 'id' },
-        { header: 'Libelle', accessorKey: 'libelle' },
-
+        { header: 'Libellé', accessorKey: 'title' },
         {
             header: 'Actions',
             id: 'actions',
@@ -250,7 +243,6 @@ export function Parametres() {
                     >
                         <Button danger><MinusSquareFilled /></Button>
                     </Popconfirm>
-
                     <NavLink to={`/categories/${row.original.id}`}>
                         <Button><EditFilled /></Button>
                     </NavLink>
@@ -258,6 +250,7 @@ export function Parametres() {
             ),
         },
     ];
+
     const table = useReactTable({
         data: users,
         columns,
@@ -268,13 +261,9 @@ export function Parametres() {
         getFilteredRowModel: getFilteredRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        initialState: {
-            pagination: {
-                pageIndex: 0,  // première page
-                pageSize: 3,   // 3 entrées
-            }
-        },
+        initialState: { pagination: { pageIndex: 0, pageSize: 3 } },
     });
+
     const table2 = useReactTable({
         data: categories,
         columns: columns2,
@@ -285,98 +274,79 @@ export function Parametres() {
         getFilteredRowModel: getFilteredRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        initialState: {
-            pagination: {
-                pageIndex: 0,  // première page
-                pageSize: 3,   // 3 entrées
-            }
-        },
+        initialState: { pagination: { pageIndex: 0, pageSize: 3 } },
     });
 
 
-
     const handleDelete = async (id) => {
-        console.log('id', id);
-        // console.log('id',id);
         try {
-            const response = await axiosInstance.delete(`http://localhost:8000/users/${id}/`);
-            message.success('User supprimé');
-            setUser(prev => prev.filter(c => c.id !== id));
-
-
+            await axiosInstance.delete(`${API_URL}gerants/${id}/`); // ✅ URL corrigée
+            message.success('Utilisateur supprimé');
+            setUser(prev => prev.filter(u => u.id !== id));
         } catch (error) {
-            message.error("Erreur lors de la suppression du produit !");
+            message.error("Erreur lors de la suppression de l'utilisateur !");
             console.error('Erreur lors de la suppression', error);
         }
     };
+
     const handleDeleteCategory = async (id) => {
-        console.log('id', id);
-        // console.log('id',id);
         try {
-            const response = await axiosInstance.delete(`http://localhost:8000/categories/${id}/`);
+            await axiosInstance.delete(`${API_URL}Categories/${id}/`); // ✅ URL corrigée
             message.success('Catégorie supprimée');
             setCategories(prev => prev.filter(c => c.id !== id));
-
-
         } catch (error) {
             message.error("Erreur lors de la suppression de la catégorie !");
             console.error('Erreur lors de la suppression', error);
         }
     };
-    const cancel = e => {
-        console.log(e);
-        message.error('Click on No');
-    };
 
     return (
-
         <>
-            <h2 >Paramètres</h2>
+            <h2>Paramètres</h2>
             <Input
                 placeholder="Rechercher..."
                 value={globalFilter || ''}
                 onChange={e => setGlobalFilter(e.target.value)}
-                style={{ marginBottom: '1rem', width: '100%', maxWidth: 360 }} 
+                style={{ marginBottom: '1rem', width: '100%', maxWidth: 360 }}
             />
 
-            {/* <Flex style={{ marginTop: '20px', overflowY: 'scroll', flexFlow: 'column' }} direction="column" gap="20px"> */}
-                <Row justify="space-between">
-                    <Col span={14}>
-                        <ResponsiveTable
+            <Row justify="space-between">
+                <Col span={14}>
+                    <ResponsiveTable
                         table={table}
                         renderTable={() => (
                             <>
-                                <table id="myTable" className="table table-hover table-striped-columns align-middle responsive-table">
+                                <table className="table table-hover table-striped-columns align-middle responsive-table">
                                     <caption>Liste des Utilisateurs</caption>
-                                    <thead className="table-dark">
+                                    <thead className="table-light">
                                         {table.getHeaderGroups().map(headerGroup => (
                                             <tr key={headerGroup.id}>
                                                 {headerGroup.headers.map(header => (
                                                     <th
                                                         key={header.id}
-                                                        style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                                                        style={{ 
+                                                            cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                                                            backgroundColor: '#f8f9fa',
+                                                            color: '#262626',
+                                                            fontWeight: '600',
+                                                            padding: '12px 8px'
+                                                        }}
                                                         onClick={header.column.getToggleSortingHandler()}
                                                     >
-                                                        {flexRender(
-                                                            header.column.columnDef.header,
-                                                            header.getContext()
-                                                        )}
+                                                        {flexRender(header.column.columnDef.header, header.getContext())}
                                                         {header.column.getCanSort() && (
-    header.column.getIsSorted() === 'asc'
-        ? <CaretUpOutlined />
-        : header.column.getIsSorted() === 'desc'
-            ? <CaretDownOutlined />
-            : null
-)}
+                                                            header.column.getIsSorted() === 'asc' ? <CaretUpOutlined />
+                                                            : header.column.getIsSorted() === 'desc' ? <CaretDownOutlined />
+                                                            : null
+                                                        )}
                                                     </th>
                                                 ))}
                                             </tr>
                                         ))}
                                     </thead>
                                     <tbody>
-
                                         {table.getRowModel().rows.map(row => (
-                                            <tr key={row.id} className={row.original.qte <= row.original.seuil ? 'table-danger' : ''}>
+                                            <tr key={row.id}>
                                                 {row.getVisibleCells().map(cell => (
                                                     <td key={cell.id}>
                                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -384,7 +354,6 @@ export function Parametres() {
                                                 ))}
                                             </tr>
                                         ))}
-
                                     </tbody>
                                 </table>
                                 <div className="pagination-controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
@@ -399,53 +368,58 @@ export function Parametres() {
                             const id = row.original?.id;
                             return (
                                 <div style={{ display: 'flex', gap: 8 }}>
-                                    <Popconfirm title="Suppression de l'utilisateur" description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?" onConfirm={() => handleDelete(id)} icon={<QuestionCircleOutlined style={{ color: 'red' }} />}>
+                                    <Popconfirm
+                                        title="Suppression de l'utilisateur"
+                                        description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+                                        onConfirm={() => handleDelete(id)}
+                                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                                    >
                                         <Button size="small" danger onClick={(e) => e.stopPropagation()}>Supprimer</Button>
                                     </Popconfirm>
                                 </div>
                             );
                         }}
                     />
-                    </Col> 
-                    <Col span={8} style={{ marginTop: '-60px' }}>
-                        <AjouterUser onUserAdded={(newUser) => setUser(prev => [...prev, newUser])} />
+                </Col>
+                <Col span={8} style={{ marginTop: '-60px' }}>
+                    <AjouterUser onUserAdded={(newUser) => setUser(prev => [...prev, newUser])} />
+                </Col>
+            </Row>
 
-                    </Col>
-                </Row>
-                <Row justify="space-between">
-                    <Col span={14}>
-                        <div className="table-responsive">
-                            <table id="myTable" className="table table-hover table-striped-columns align-middle responsive-table">
+            <Row justify="space-between">
+                <Col span={14}>
+                    <div className="table-responsive">
+                        <table className="table table-hover table-striped-columns align-middle responsive-table">
                             <caption>Liste des catégories de produits</caption>
-                            <thead className="table-dark">
+                            <thead className="table-light">
                                 {table2.getHeaderGroups().map(headerGroup => (
                                     <tr key={headerGroup.id}>
                                         {headerGroup.headers.map(header => (
                                             <th
                                                 key={header.id}
-                                                style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                                                style={{ 
+                                                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                                                    backgroundColor: '#f8f9fa',
+                                                    color: '#262626',
+                                                    fontWeight: '600',
+                                                    padding: '12px 8px'
+                                                }}
                                                 onClick={header.column.getToggleSortingHandler()}
                                             >
-                                                {flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
+                                                {flexRender(header.column.columnDef.header, header.getContext())}
                                                 {header.column.getCanSort() && (
-    header.column.getIsSorted() === 'asc'
-        ? <CaretUpOutlined />
-        : header.column.getIsSorted() === 'desc'
-            ? <CaretDownOutlined />
-            : null
-)}
+                                                    header.column.getIsSorted() === 'asc' ? <CaretUpOutlined />
+                                                    : header.column.getIsSorted() === 'desc' ? <CaretDownOutlined />
+                                                    : null
+                                                )}
                                             </th>
                                         ))}
                                     </tr>
                                 ))}
                             </thead>
                             <tbody>
-
                                 {table2.getRowModel().rows.map(row => (
-                                    <tr key={row.id} className={row.original.qte <= row.original.seuil ? 'table-danger' : ''}>
+                                    <tr key={row.id}>
                                         {row.getVisibleCells().map(cell => (
                                             <td key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -453,28 +427,19 @@ export function Parametres() {
                                         ))}
                                     </tr>
                                 ))}
-
                             </tbody>
                         </table>
                         <div className="pagination-controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
                             <Button onClick={() => table2.previousPage()} disabled={!table2.getCanPreviousPage()}>Précédent</Button>
                             <Button onClick={() => table2.nextPage()} disabled={!table2.getCanNextPage()}>Suivant</Button>
-                            <span>
-                                Page {table2.getState().pagination.pageIndex + 1} / {table2.getPageCount()}
-                            </span>
+                            <span>Page {table2.getState().pagination.pageIndex + 1} / {table2.getPageCount()}</span>
                         </div>
                     </div>
-                    </Col>
-                    <Col span={8} style={{ marginTop: '0px' }}>
-                        <AjouterCategorie onCategorieAdded={(newCategorie) => setCategories(prev => [...prev, newCategorie])} />
-
-                    </Col>
-                </Row>
-            {/* </Flex> */}
-
-
+                </Col>
+                <Col span={8}>
+                    <AjouterCategorie onCategorieAdded={(newCategorie) => setCategories(prev => [...prev, newCategorie])} />
+                </Col>
+            </Row>
         </>
-
-
-    )
+    );
 }
