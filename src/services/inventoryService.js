@@ -1,31 +1,34 @@
 import axios from 'axios';
+import axiosInstance from "./axiosInstance";
 
 // const API_URL = 'http://localhost:5273/api'; 
-const API_URL = "http://187.124.210.239:8080/api";
+// const API_URL = "http://187.124.210.239:8080/api";
+// export const API_URL = "http://localhost:5273/api/"; 
+export const API_URL = "https://api.kftech237.com/api";
 
 
 const inventoryService = {
   // Créer une session d'inventaire
   createSession: async (data) => {
-    const response = await axios.post(`${API_URL}/Inventory/sessions`, data);
+    const response = await axiosInstance.post(`${API_URL}/Inventory/sessions`, data);
     return response.data;
   },
 
   // Récupérer toutes les sessions
   getAllSessions: async () => {
-    const response = await axios.get(`${API_URL}/Inventory/sessions`);
+    const response = await axiosInstance.get(`${API_URL}/Inventory/sessions`);
     return response.data;
   },
 
   // Récupérer une session par ID
   getSessionById: async (id) => {
-    const response = await axios.get(`${API_URL}/Inventory/sessions/${id}`);
+    const response = await axiosInstance.get(`${API_URL}/Inventory/sessions/${id}`);
     return response.data;
   },
 
   // Récupérer les lignes en attente
   getPendingLines: async (sessionId) => {
-    const response = await axios.get(
+    const response = await axiosInstance.get(
       `${API_URL}/Inventory/sessions/${sessionId}/pending-lines`
     );
     return response.data;
@@ -33,7 +36,7 @@ const inventoryService = {
 
   // Enregistrer un comptage
   recordCount: async (lineId, data) => {
-    const response = await axios.post(
+    const response = await axiosInstance.post(
       `${API_URL}/Inventory/lines/${lineId}/count`,
       data
     );
@@ -42,7 +45,7 @@ const inventoryService = {
 
   // Valider une session
   validateSession: async (sessionId, userId) => {
-    const response = await axios.post(
+    const response = await axiosInstance.post(
       `${API_URL}/Inventory/sessions/${sessionId}/validate`,
       JSON.stringify(userId),
       {
@@ -54,13 +57,13 @@ const inventoryService = {
 
   // Récupérer les mouvements de stock
   getStockMovements: async () => {
-    const response = await axios.get(`${API_URL}/StockMovements`);
+    const response = await axiosInstance.get(`${API_URL}/StockMovements`);
     return response.data;
   },
 
   // Récupérer les mouvements d'un produit
   getProductMovements: async (productId) => {
-    const response = await axios.get(`${API_URL}/StockMovements/product/${productId}`);
+    const response = await axiosInstance.get(`${API_URL}/StockMovements/product/${productId}`);
     return response.data;
   }
 };
