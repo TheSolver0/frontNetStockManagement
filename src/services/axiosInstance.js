@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const baseURL = 'http://localhost:5273/api'; 
-// const baseURL = "https://api.kftech237.com/api/";
+// const baseURL = 'http://localhost:5273/api'; 
+const baseURL = "https://api.kftech237.com/api/";
 
 
 const axiosInstance = axios.create({
