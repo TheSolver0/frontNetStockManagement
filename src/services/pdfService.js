@@ -18,7 +18,7 @@ class PDFService {
   };
 
   // ─── URL du logo — remplacez ici ───────────────────────────────────────────
-  static LOGO_URL = 'https://VOTRE_URL_LOGO_ICI';
+  static LOGO_URL = '../assets/images/logoKFTech.jpg'; // chemin vers votre logo (png recommandé pour la transparence)
   static SHOP_NAME = 'Nom de la Boutique';
   static SHOP_SUBTITLE = 'Gestion des inventaires';
 
