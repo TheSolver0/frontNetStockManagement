@@ -39,7 +39,7 @@ import CreateInventory from './pages/CreateInventory';
 import InventoryList from './pages/InventoryList';
 import InventoryCount from './pages/InventoryCount';
 import InventoryDetails from './pages/InventoryDetails';
-
+import { EditCategorie } from './pages/EditCategorie';
 
 const { Header, Sider, Content } = Layout;
 
@@ -67,6 +67,7 @@ const App = () => (
         { path: '/inventory/:sessionId/count', element: <InventoryCount /> },
         { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
         { path: '/parametres', element: <Parametres /> },
+        { path: '/categories/:id', element: <EditCategorie /> }
       ],
     }
   ])} />

@@ -85,6 +85,7 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
         setLoading(true);
         try {
             const fd = new FormData();
+            fd.append('id', data.id); // Requis par le backend pour valider le PUT
             fd.append('name', values.name.trim());
             fd.append('desc', values.desc?.trim() ?? '');
             fd.append('categoryId', String(parseInt(values.categoryId, 10)));
@@ -102,15 +103,17 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
             }
 
             const response = await axiosInstance.put(
-                `${API_URL}Products/${data.id}/`, fd,
+                `${API_URL}Products/${data.id}`, fd,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
 
             message.success("Produit modifié avec succès !");
             setIsEditing(false);
-            onSaved?.(response.data); // remonte les nouvelles données
+            // On utilise les données de la réponse ou les valeurs du formulaire par défaut
+            onSaved?.(response.data || { ...data, ...values }); 
         } catch (error) {
-            message.error("Erreur lors de la modification du produit");
+            const msg = error.response?.data?.message || "Erreur lors de la modification du produit";
+            message.error(msg);
             console.error('Erreur :', error);
         } finally {
             setLoading(false);

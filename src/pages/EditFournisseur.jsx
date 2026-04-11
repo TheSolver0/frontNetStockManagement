@@ -56,7 +56,7 @@ function ModifierFournisseur({ data, isEditing, setIsEditing }) {
         setLoading(true);
         values.id = data.id;
         try {
-            const response = await axiosInstance.put(`${API_URL}Suppliers/${data.id}/`, values);
+            const response = await axiosInstance.put(`${API_URL}Suppliers/${data.id}`, values);
             message.success("Fournisseur modifié avec succès !");
             setIsEditing(false);
         } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo  } from 'react';
 import { NavLink } from "react-router-dom";
 import { 
   Button, 
@@ -436,11 +436,14 @@ export function CommandesFournisseurs() {
     },
   ];
 
-  const filteredData = commandes.filter(item =>
+  const filteredData = useMemo(() =>
+  commandes.filter(item =>
     item.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ),
+  [commandes, searchTerm]
+);
 
   const table = useReactTable({
     data: filteredData,
@@ -450,6 +453,7 @@ export function CommandesFournisseurs() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false, 
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
   });
 

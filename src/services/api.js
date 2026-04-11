@@ -2,8 +2,8 @@ import axios from "axios";
 import axiosInstance from "./axiosInstance";
 
 // export const API_URL = "https://inventorymanagementapi-0f3a.onrender.com/api/";
-export const API_URL = "http://localhost:5273/api/";
-// export const API_URL = "https://api.kftech237.com/api/";
+// export const API_URL = "http://localhost:5273/api/";
+export const API_URL = "https://api.kftech237.com/api/";
 
 
 

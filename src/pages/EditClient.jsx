@@ -45,7 +45,7 @@ function ModifierClient({ data, isEditing, setIsEditing }) {
         setLoading(true);
         values.id = data.id;
         try {
-            const response = await axiosInstance.put(`${API_URL}Customers/${data.id}/`, values);
+            const response = await axiosInstance.put(`${API_URL}Customers/${data.id}`, values);
             message.success("Client modifié avec succès !");
             setIsEditing(false);
         } catch (error) {

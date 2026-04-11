@@ -86,7 +86,7 @@ function ModifierCommande({ data, isEditing, setIsEditing }) {
         setLoading(true);
         values.id = data.id;
         try {
-            const response = await axiosInstance.put(`${API_URL}Provides/${data.id}/`, values);
+            const response = await axiosInstance.put(`${API_URL}Provides/${data.id}`, values);
             message.success("Commande fournisseur modifiée avec succès !");
             setIsEditing(false);
         } catch (error) {

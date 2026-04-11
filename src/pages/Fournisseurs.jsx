@@ -265,10 +265,15 @@ const columnsRT = useMemo(() => [
   },
 ], [handleDelete]);
 
-  const filteredData = fournisseurs.filter(item =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+ const filteredData = useMemo(
+  () =>
+    fournisseurs.filter(
+      (item) =>
+        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ),
+  [fournisseurs, searchTerm],
+);
 
   const table = useReactTable({
     data: filteredData,
@@ -278,6 +283,7 @@ const columnsRT = useMemo(() => [
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false,
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
   });
 
@@ -510,11 +516,16 @@ const columnsRT = useMemo(() => [
                       </Button>
                     </Popconfirm>
 
-                    <NavLink to={`/fournisseur/${selectedSupplier.id}`} onClick={() => closeDrawer()}>
-                      <Button type="primary" icon={<EditOutlined />}>
-                        Éditer
-                      </Button>
-                    </NavLink>
+                    <Button
+  type="primary"
+  icon={<EditOutlined />}
+  onClick={() => {
+    closeDrawer();
+    navigate(`/fournisseur/${selectedSupplier.id}`);
+  }}
+>
+  Éditer
+</Button>
                   </>
                 )}
               </div>

@@ -2,271 +2,409 @@ import jsPDF from 'jspdf';
 import autotable from 'jspdf-autotable';
 
 class PDFService {
-  // ---------------- Paramètres de base ---------------------
-  static COLORS = {
-    primary: [0, 102, 204],
-    dark: [40, 40, 40],
-    gray: [100, 100, 100],
-    lightGray: [245, 245, 245],
-    white: [255, 255, 255],
-    green: [39, 174, 96],
-    red: [192, 57, 43],
-    orange: [243, 156, 18],
+  // ─── Palette ───────────────────────────────────────────────────────────────
+  static C = {
+    navy:       [15,  40,  80],    // header principal
+    blue:       [30,  90, 200],    // accents
+    blueLight:  [235, 241, 255],   // fond section
+    teal:       [0,  150, 136],    // stat positive
+    red:        [211,  47,  47],   // stat négative
+    orange:     [245, 124,   0],   // avertissement
+    dark:       [30,  30,  30],    // texte principal
+    mid:        [90,  90,  90],    // texte secondaire
+    light:      [245, 246, 250],   // fond alternance
+    border:     [210, 215, 230],   // lignes
+    white:      [255, 255, 255],
   };
 
+  // ─── URL du logo — remplacez ici ───────────────────────────────────────────
+  static LOGO_URL = 'https://VOTRE_URL_LOGO_ICI';
+  static SHOP_NAME = 'Nom de la Boutique';
+  static SHOP_SUBTITLE = 'Gestion des inventaires';
+
+  // ─── Créer le doc ──────────────────────────────────────────────────────────
   static createDoc() {
     return new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   }
 
-  // ----------- Header commun sur chaque page ----------------
+  // ─── Header moderne avec logo ──────────────────────────────────────────────
   static addHeader(doc, title) {
-    // Bande bleue en haut
-    doc.setFillColor(...this.COLORS.primary);
-    doc.rect(0, 0, 210, 28, 'F');
+    const C = this.C;
 
-    // Titre
-    doc.setTextColor(...this.COLORS.white);
+    // Fond header navy
+    doc.setFillColor(...C.navy);
+    doc.rect(0, 0, 210, 38, 'F');
+
+    // Bande accent bleue fine en bas du header
+    doc.setFillColor(...C.blue);
+    doc.rect(0, 35, 210, 3, 'F');
+
+    // ── Zone logo (gauche) ──
+    // Fond blanc arrondi pour le logo
+    doc.setFillColor(...C.white);
+    doc.roundedRect(10, 5, 28, 28, 2, 2, 'F');
+
+    // Tentative de chargement du logo
+    try {
+      doc.addImage(this.LOGO_URL, 'PNG', 11, 6, 26, 26);
+    } catch {
+      // Placeholder si le logo ne charge pas : initiales stylisées
+      doc.setFillColor(...C.blueLight);
+      doc.roundedRect(10, 5, 28, 28, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(...C.navy);
+      doc.text('LOGO', 24, 21, { align: 'center' });
+    }
+
+    // ── Nom boutique + sous-titre (milieu-gauche) ──
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text(title, 14, 14);
+    doc.setFontSize(13);
+    doc.setTextColor(...C.white);
+    doc.text(this.SHOP_NAME, 44, 15);
 
-    // Sous-titre date
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 14, 23);
-
-    // Reset couleur
-    doc.setTextColor(...this.COLORS.dark);
-  }
-
-  // ─── Footer commun sur chaque page ───────────
-  static addFooter(doc, pageNum) {
-    const totalPages = doc.getNumberOfPages();
     doc.setFontSize(8);
-    doc.setTextColor(...this.COLORS.gray);
-    doc.text(`Page ${pageNum} / ${totalPages}`, 105, 290, { align: 'center' });
+    doc.setTextColor(180, 200, 240);
+    doc.text(this.SHOP_SUBTITLE, 44, 21);
 
-    // Ligne séparatrice
-    doc.setDrawColor(...this.COLORS.primary);
-    doc.setLineWidth(0.3);
-    doc.line(14, 285, 196, 285);
-  }
-
-  // ─── Carte info (référence, statut, créateur) ─
-  static addInfoCard(doc, session, startY) {
-    const status = session.status === "InProgress" ? 'En cours' : session.status === "Validated" ? 'Validé' : 'Annulé';
-    const statusColor = session.status === "Validated" ? this.COLORS.green : session.status === "InProgress" ? this.COLORS.orange : this.COLORS.red;
-    const type = session.type === "Full" ? 'Complet' : session.type === "Cyclic" ? 'Tournant' : 'Ciblé';
-
-    // Fond carte
-    doc.setFillColor(...this.COLORS.lightGray);
-    doc.roundedRect(14, startY, 182, 42, 3, 3, 'F');
-
-    // Colonne gauche
+    // ── Titre du rapport (droite) ──
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...this.COLORS.dark);
-    doc.text('Référence :', 20, startY + 10);
-    doc.text('Type :', 20, startY + 22);
-    doc.text('Créé par :', 20, startY + 34);
+    doc.setTextColor(...C.white);
+    doc.text(title, 196, 14, { align: 'right' });
 
+    // Date de génération
+    const dateStr = new Date().toLocaleDateString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
     doc.setFont('helvetica', 'normal');
-    doc.text(session.reference || '—', 60, startY + 10);
-    doc.text(type, 60, startY + 22);
-    doc.text(session.createdBy || '—', 60, startY + 34);
+    doc.setFontSize(7.5);
+    doc.setTextColor(160, 185, 230);
+    doc.text(`Généré le ${dateStr}`, 196, 22, { align: 'right' });
 
-    // Colonne droite
-    doc.setFont('helvetica', 'bold');
-    doc.text('Statut :', 115, startY + 10);
-    doc.text('Date création :', 115, startY + 22);
-    doc.text('Date validation :', 115, startY + 34);
-
-    doc.setFont('helvetica', 'normal');
-
-    // Statut avec couleur
-    doc.setTextColor(...statusColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(status, 160, startY + 10);
-
-    doc.setTextColor(...this.COLORS.dark);
-    doc.setFont('helvetica', 'normal');
-    doc.text(this.formatDate(session.createdDate), 160, startY + 22);
-    doc.text(this.formatDate(session.validatedDate), 160, startY + 34);
-
-    return startY + 50;
+    // Reset
+    doc.setTextColor(...C.dark);
   }
 
-  // ─── Cartes résumé (chiffres clés) ───────────
-  static addSummaryCards(doc, session, startY) {
-    const lines = session.lines || [];
-    const counted = lines.filter(l => l.countedQuantity !== null).length;
-    const positive = lines.filter(l => (l.variance || 0) > 0).length;
-    const negative = lines.filter(l => (l.variance || 0) < 0).length;
-    const totalVariance = lines.reduce((acc, l) => acc + (l.variance || 0), 0);
+  // ─── Footer ────────────────────────────────────────────────────────────────
+  static addFooter(doc, pageNum) {
+    const C = this.C;
+    const total = doc.getNumberOfPages();
 
-    const cards = [
-      { label: 'Produits', value: lines.length, color: this.COLORS.primary },
-      { label: 'Comptés', value: counted, color: this.COLORS.green },
-      { label: 'Écarts +', value: positive, color: this.COLORS.green },
-      { label: 'Écarts -', value: negative, color: this.COLORS.red },
-      { label: 'Variance totale', value: (totalVariance >= 0 ? '+' : '') + totalVariance, color: totalVariance >= 0 ? this.COLORS.green : this.COLORS.red }
+    // Ligne de séparation
+    doc.setDrawColor(...C.border);
+    doc.setLineWidth(0.4);
+    doc.line(14, 284, 196, 284);
+
+    // Fond footer discret
+    doc.setFillColor(...C.light);
+    doc.rect(0, 284, 210, 13, 'F');
+
+    // Nom boutique à gauche
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.mid);
+    doc.text(this.SHOP_NAME, 14, 291);
+
+    // Numéro de page centré
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...C.mid);
+    doc.text(`Page ${pageNum} / ${total}`, 105, 291, { align: 'center' });
+
+    // Date à droite
+    doc.text(new Date().toLocaleDateString('fr-FR'), 196, 291, { align: 'right' });
+  }
+
+  // ─── Séparateur de section avec titre ──────────────────────────────────────
+  static addSectionTitle(doc, label, y) {
+    const C = this.C;
+
+    doc.setFillColor(...C.blueLight);
+    doc.roundedRect(14, y, 182, 9, 1.5, 1.5, 'F');
+
+    doc.setDrawColor(...C.blue);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(14, y, 3, 9, 1, 1, 'F'); // barre latérale bleue
+    doc.setFillColor(...C.blue);
+    doc.rect(14, y, 3, 9, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...C.navy);
+    doc.text(label, 20, y + 6);
+    doc.setTextColor(...C.dark);
+
+    return y + 13;
+  }
+
+  // ─── Carte info ────────────────────────────────────────────────────────────
+  static addInfoCard(doc, session, startY) {
+    const C = this.C;
+    const statusMap = {
+      InProgress: { label: 'En cours',  color: C.orange },
+      Validated:  { label: 'Validé',    color: C.teal   },
+      Cancelled:  { label: 'Annulé',    color: C.red    },
+    };
+    const typeMap = {
+      Full:   'Complet',
+      Cyclic: 'Tournant',
+      Partial: 'Ciblé',
+    };
+
+    const { label: statusLabel, color: statusColor } = statusMap[session.status] || { label: session.status, color: C.mid };
+    const typeLabel = typeMap[session.type] || session.type || '—';
+
+    let y = startY;
+    y = this.addSectionTitle(doc, 'Informations générales', y);
+
+    // Fond carte
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.border);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(14, y, 182, 46, 3, 3, 'FD');
+
+    // Colonne gauche
+    const col1x = 20, col1vx = 62;
+    const col2x = 110, col2vx = 155;
+    const rows = [
+      ['Référence :', session.reference || '—', 'Statut :', null],
+      ['Type :', typeLabel, 'Date création :', this.formatDate(session.createdDate)],
+      ['Créé par :', session.createdBy || '—', 'Date validation :', this.formatDate(session.validatedDate)],
     ];
 
-    const cardWidth = 34;
-    const gap = 4;
-    const startX = 14;
+    rows.forEach((row, i) => {
+      const ry = y + 10 + i * 13;
 
-    cards.forEach((card, i) => {
-      const x = startX + i * (cardWidth + gap);
-
-      // Fond carte
-      doc.setFillColor(...this.COLORS.white);
-      doc.roundedRect(x, startY, cardWidth, 24, 2, 2, 'F');
-
-      // Bord
-      doc.setDrawColor(...card.color);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(x, startY, cardWidth, 24, 2, 2, 'S');
-
-      // Ligne colorée en haut
-      doc.setFillColor(...card.color);
-      doc.roundedRect(x, startY, cardWidth, 3, 2, 2, 'F');
-
-      // Valeur
-      doc.setTextColor(...card.color);
+      // Étiquettes
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text(String(card.value), x + cardWidth / 2, startY + 13, { align: 'center' });
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C.mid);
+      doc.text(row[0], col1x, ry);
+      doc.text(row[2], col2x, ry);
 
-      // Label
-      doc.setTextColor(...this.COLORS.gray);
+      // Valeurs col 1
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.text(card.label, x + cardWidth / 2, startY + 20, { align: 'center' });
+      doc.setTextColor(...C.dark);
+      doc.text(String(row[1]), col1vx, ry);
+
+      // Valeur col 2
+      if (i === 0) {
+        // Badge statut coloré
+        const badgeW = 28, badgeH = 6;
+        doc.setFillColor(...statusColor);
+        doc.roundedRect(col2vx, ry - 5, badgeW, badgeH, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...C.white);
+        doc.text(statusLabel, col2vx + badgeW / 2, ry - 0.5, { align: 'center' });
+        doc.setTextColor(...C.dark);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.text(String(row[3]), col2vx, ry);
+      }
     });
 
-    return startY + 32;
+    return y + 54;
   }
 
-  // ─── Tableau des lignes d'inventaire ──────────
-  static addInventoryTable(doc, session, startY) {
+  // ─── Cartes résumé ─────────────────────────────────────────────────────────
+  static addSummaryCards(doc, session, startY) {
+    const C = this.C;
     const lines = session.lines || [];
+    const counted      = lines.filter(l => l.countedQuantity !== null).length;
+    const positive     = lines.filter(l => (l.variance || 0) > 0).length;
+    const negative     = lines.filter(l => (l.variance || 0) < 0).length;
+    const totalVar     = lines.reduce((a, l) => a + (l.variance || 0), 0);
+    const varSign      = totalVar >= 0 ? '+' : '';
 
-    const headers = ['SKU', 'Produit', 'Emplacement', 'Théorique', 'Compté', 'Variance', 'Compté par'];
+    let y = startY;
+    y = this.addSectionTitle(doc, 'Résumé', y);
+
+    const cards = [
+      { label: 'Total produits', value: lines.length, color: C.blue,   icon: '■' },
+      { label: 'Comptés',        value: counted,       color: C.teal,   icon: '✔' },
+      { label: 'Écarts positifs', value: positive,    color: C.teal,   icon: '+' },
+      { label: 'Écarts négatifs', value: negative,    color: C.red,    icon: '−' },
+      { label: 'Variance totale', value: `${varSign}${totalVar}`, color: totalVar >= 0 ? C.teal : C.red, icon: '~' },
+    ];
+
+    const cardW = 34, gap = 3.5, startX = 14;
+
+    cards.forEach((card, i) => {
+      const x = startX + i * (cardW + gap);
+
+      // Ombre légère (simulée par un rect décalé)
+      doc.setFillColor(220, 225, 235);
+      doc.roundedRect(x + 0.8, y + 0.8, cardW, 30, 2.5, 2.5, 'F');
+
+      // Fond blanc carte
+      doc.setFillColor(...C.white);
+      doc.setDrawColor(...C.border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, y, cardW, 30, 2.5, 2.5, 'FD');
+
+      // Bande colorée en haut
+      doc.setFillColor(...card.color);
+      doc.roundedRect(x, y, cardW, 5, 2.5, 2.5, 'F');
+      doc.rect(x, y + 2.5, cardW, 2.5, 'F'); // carré bas pour combler l'arrondi
+
+      // Valeur centrale
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(...card.color);
+      doc.text(String(card.value), x + cardW / 2, y + 17, { align: 'center' });
+
+      // Label
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(...C.mid);
+      doc.text(card.label, x + cardW / 2, y + 25, { align: 'center' });
+    });
+
+    doc.setTextColor(...C.dark);
+    return y + 38;
+  }
+
+  // ─── Tableau inventaire ────────────────────────────────────────────────────
+  static addInventoryTable(doc, session, startY) {
+    const C = this.C;
+    const lines = session.lines || [];
+    let y = startY;
+    y = this.addSectionTitle(doc, 'Détail des lignes d\'inventaire', y);
+
+    const headers = ['SKU', 'Produit', 'Emplacement', 'Théorique', 'Compté', 'Variance', 'Compteur'];
     const rows = lines.map(line => {
-      const variance = line.variance || 0;
+      const v = line.variance || 0;
       return [
-        line.productSku || '—',
-        line.productName || '—',
-        line.location || '—',
+        line.productSku   || '—',
+        line.productName  || '—',
+        line.location     || '—',
         String(line.theoreticalQuantity ?? 0),
         line.countedQuantity !== null ? String(line.countedQuantity) : 'Non compté',
-        (variance > 0 ? '+' : '') + variance,
-        line.countedBy || '—'
+        (v > 0 ? '+' : '') + v,
+        line.countedBy    || '—',
       ];
     });
 
-    autotable(doc,{
-      startY: startY,
+    autotable(doc, {
+      startY: y,
       head: [headers],
       body: rows,
       theme: 'grid',
       headStyles: {
-        fillColor: this.COLORS.primary,
-        textColor: this.COLORS.white,
+        fillColor: C.navy,
+        textColor: C.white,
         fontStyle: 'bold',
-        fontSize: 9,
-        cellPadding: 3
-      },
-      styless: {
         fontSize: 8.5,
-        cellPadding: 3,
-        textColor: this.COLORS.dark
+        cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
+        lineColor: C.navy,
+        lineWidth: 0,
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+        textColor: C.dark,
+        lineColor: C.border,
+        lineWidth: 0.3,
       },
       alternateRowStyles: {
-        fillColor: this.COLORS.lightGray
+        fillColor: C.light,
       },
       columnStyles: {
-        0: { cellWidth: 30, textColor: this.COLORS.gray, font: 'courier' },
+        0: { cellWidth: 28, textColor: C.mid, font: 'courier', fontSize: 7.5 },
         1: { cellWidth: 50 },
-        2: { cellWidth: 28, textColor: this.COLORS.gray },
-        3: { cellWidth: 22, halign: 'center' },
-        4: { cellWidth: 22, halign: 'center' },
-        5: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-        6: { cellWidth: 24, textColor: this.COLORS.gray }
+        2: { cellWidth: 26, textColor: C.mid, fontSize: 7.5 },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+        6: { cellWidth: 24, textColor: C.mid, fontSize: 7.5 },
       },
-      // Coloration de la colonne Variance selon la valeur
-      didDrawCell: (data) => {
-        if (data.section === 'body' && data.column.index === 5) {
-          const variance = parseFloat(data.cell.raw);
-          if (variance > 0) {
-            data.cell.styles.textColor = this.COLORS.green;
-          } else if (variance < 0) {
-            data.cell.styles.textColor = this.COLORS.red;
-          }
-        }
-        // Ligne "Non compté" en orange
-        if (data.section === 'body' && data.column.index === 4 && data.cell.raw === 'Non compté') {
-          data.cell.styles.textColor = this.COLORS.orange;
-          data.cell.styles.fontStyle = 'italic';
-        }
-      },
-      // Gestion des sauts de page automatiques
       didParseCell: (data) => {
-        if (data.section === 'body' && data.column.index === 5) {
-          const variance = parseFloat(data.cell.raw);
-          if (variance > 0) data.cell.styles.textColor = [39, 174, 96];
-          else if (variance < 0) data.cell.styles.textColor = [192, 57, 43];
+        if (data.section !== 'body') return;
+
+        // Variance colorée
+        if (data.column.index === 5) {
+          const v = parseFloat(data.cell.raw);
+          if (v > 0)      data.cell.styles.textColor = C.teal;
+          else if (v < 0) data.cell.styles.textColor = C.red;
+          else            data.cell.styles.textColor = C.mid;
         }
-        if (data.section === 'body' && data.column.index === 4 && data.cell.raw === 'Non compté') {
-          data.cell.styles.textColor = [243, 156, 18];
-          data.cell.styles.fontStyle = 'italic';
+
+        // "Non compté" en orange italique
+        if (data.column.index === 4 && data.cell.raw === 'Non compté') {
+          data.cell.styles.textColor  = C.orange;
+          data.cell.styles.fontStyle  = 'italic';
         }
-      }
+      },
+      // Ligne colorée à gauche selon variance
+      didDrawCell: (data) => {
+        if (data.section !== 'body' || data.column.index !== 0) return;
+        const row = data.row.cells;
+        const v   = parseFloat(row[5]?.raw);
+        let barColor = null;
+        if (v > 0)       barColor = C.teal;
+        else if (v < 0)  barColor = C.red;
+
+        if (barColor) {
+          doc.setFillColor(...barColor);
+          doc.rect(data.cell.x, data.cell.y, 1.5, data.cell.height, 'F');
+        }
+      },
+      margin: { left: 14, right: 14 },
     });
 
     return doc.lastAutoTable.finalY;
   }
 
-  // ------- Notes si présentes ------------------------ 
+  // ─── Notes ─────────────────────────────────────────────────────────────────
   static addNotes(doc, session, startY) {
     if (!session.notes) return startY;
+    const C = this.C;
+    let y = startY;
+    y = this.addSectionTitle(doc, 'Notes', y);
 
-    doc.setFillColor(...this.COLORS.lightGray);
-    doc.roundedRect(14, startY, 182, 18, 3, 3, 'F');
+    doc.setFillColor(255, 252, 235);
+    doc.setDrawColor(C.orange);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(14, y, 182, 16, 2, 2, 'FD');
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...this.COLORS.dark);
-    doc.text('Notes :', 20, startY + 7);
+    // Bande orange gauche
+    doc.setFillColor(...C.orange);
+    doc.rect(14, y, 2.5, 16, 'F');
 
     doc.setFont('helvetica', 'normal');
-    doc.text(session.notes, 48, startY + 7);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...C.dark);
+    const wrapped = doc.splitTextToSize(session.notes, 168);
+    doc.text(wrapped, 20, y + 6);
 
-    return startY + 24;
+    return y + 22;
   }
 
-  // ─── Utilitaires ──────────────────────────────
+  // ─── Utilitaires ──────────────────────────────────────────────────────────
   static formatDate(date) {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit',
     });
   }
 
-  // ─── EXPORT : UN SEUL inventaire ──────────────
+  // ─── Export : un seul inventaire ──────────────────────────────────────────
   static exportSingleInventory(session) {
     const doc = this.createDoc();
-    this.addHeader(doc, `Rapport Inventaire — ${session.reference}`);
+    this.addHeader(doc, `Inventaire — ${session.reference}`);
 
-    let y = 34;
+    let y = 44;
     y = this.addInfoCard(doc, session, y);
     y = this.addSummaryCards(doc, session, y);
     y = this.addNotes(doc, session, y);
-    y = this.addInventoryTable(doc, session, y);
+    this.addInventoryTable(doc, session, y);
 
-    // Footer sur chaque page
     for (let i = 1; i <= doc.getNumberOfPages(); i++) {
       doc.setPage(i);
       this.addFooter(doc, i);
@@ -275,26 +413,21 @@ class PDFService {
     doc.save(`Inventaire_${session.reference}.pdf`);
   }
 
-  // ─── EXPORT : TOUS les inventaires ────────────
+  // ─── Export : tous les inventaires ────────────────────────────────────────
   static exportAllInventories(sessions) {
     const doc = this.createDoc();
-    let isFirstPage = true;
 
     sessions.forEach((session, index) => {
-      // Nouvelle page sauf la première fois
-      if (!isFirstPage) doc.addPage();
-      isFirstPage = false;
+      if (index > 0) doc.addPage();
+      this.addHeader(doc, `Inventaire — ${session.reference}`);
 
-      this.addHeader(doc, `Rapport Inventaire — ${session.reference}`);
-
-      let y = 34;
+      let y = 44;
       y = this.addInfoCard(doc, session, y);
       y = this.addSummaryCards(doc, session, y);
       y = this.addNotes(doc, session, y);
-      y = this.addInventoryTable(doc, session, y);
+      this.addInventoryTable(doc, session, y);
     });
 
-    // Footer sur chaque page
     for (let i = 1; i <= doc.getNumberOfPages(); i++) {
       doc.setPage(i);
       this.addFooter(doc, i);

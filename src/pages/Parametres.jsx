@@ -183,6 +183,10 @@ export function Parametres() {
     const [categories, setCategories] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+const [editingUser, setEditingUser] = useState(null);
+const [editForm] = Form.useForm();
+
 
     useEffect(() => {
         getUsers()
@@ -196,7 +200,7 @@ export function Parametres() {
 
     const columns = [
         { header: 'ID', accessorKey: 'id' },
-        { header: 'Nom', accessorKey: 'nom' },
+        { header: 'Nom', accessorKey: 'username' },
         { header: 'Email', accessorKey: 'email' },
         {
             header: 'Role',
@@ -210,19 +214,17 @@ export function Parametres() {
             header: 'Actions',
             id: 'actions',
             cell: ({ row }) => (
-                <Flex justify="space-evenly">
-                    <Popconfirm
-                        title="Suppression de l'utilisateur"
-                        description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
-                        onConfirm={() => handleDelete(row.original.id)}
-                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-                    >
-                        <Button danger><MinusSquareFilled /></Button>
-                    </Popconfirm>
-                    <NavLink to={`/users/${row.original.id}`}>
-                        <Button><EditFilled /></Button>
-                    </NavLink>
-                </Flex>
+                 <Flex justify="space-evenly">
+            <Popconfirm
+                title="Suppression de l'utilisateur"
+                description="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+                onConfirm={() => handleDelete(row.original.id)}
+                icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+            >
+                <Button danger><MinusSquareFilled /></Button>
+            </Popconfirm>
+            <Button onClick={() => handleEditUser(row.original)}><EditFilled /></Button>
+        </Flex>
             ),
         },
     ];
@@ -277,7 +279,29 @@ export function Parametres() {
         initialState: { pagination: { pageIndex: 0, pageSize: 3 } },
     });
 
+const handleEditUser = (user) => {
+    setEditingUser(user);
+    editForm.setFieldsValue({
+        username: user.username,
+        email: user.email,
+    });
+    setEditModalOpen(true);
+};
 
+const handleSaveUser = async (values) => {
+    try {
+        const response = await axiosInstance.put(`${API_URL}Gerants/${editingUser.id}`, {
+            username: values.username,
+            email: values.email,
+        });
+        message.success("Utilisateur mis à jour !");
+        setUser(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...values } : u));
+        setEditModalOpen(false);
+    } catch (error) {
+        message.error("Erreur lors de la mise à jour !");
+        console.error(error);
+    }
+};
     const handleDelete = async (id) => {
         try {
             await axiosInstance.delete(`${API_URL}gerants/${id}/`); // ✅ URL corrigée
@@ -290,15 +314,16 @@ export function Parametres() {
     };
 
     const handleDeleteCategory = async (id) => {
-        try {
-            await axiosInstance.delete(`${API_URL}Categories/${id}/`); // ✅ URL corrigée
-            message.success('Catégorie supprimée');
-            setCategories(prev => prev.filter(c => c.id !== id));
-        } catch (error) {
-            message.error("Erreur lors de la suppression de la catégorie !");
-            console.error('Erreur lors de la suppression', error);
-        }
-    };
+    try {
+        await axiosInstance.delete(`${API_URL}Categories/${id}`); // ✅ sans slash final
+        message.success('Catégorie supprimée');
+        setCategories(prev => prev.filter(c => c.id !== id));
+    } catch (error) {
+        const msg = error.response?.data?.message || "Erreur lors de la suppression !";
+        message.error(msg); // ✅ affiche le vrai message
+        console.error('Erreur lors de la suppression', error);
+    }
+};
 
     return (
         <>
@@ -440,6 +465,36 @@ export function Parametres() {
                     <AjouterCategorie onCategorieAdded={(newCategorie) => setCategories(prev => [...prev, newCategorie])} />
                 </Col>
             </Row>
+            <Modal
+    title="Modifier l'utilisateur"
+    open={editModalOpen}
+    onCancel={() => setEditModalOpen(false)}
+    onOk={() => editForm.submit()}
+    okText="Enregistrer"
+    cancelText="Annuler"
+>
+    <Form
+        form={editForm}
+        layout="vertical"
+        onFinish={handleSaveUser}
+        style={{ marginTop: '1rem' }}
+    >
+        <Form.Item
+            name="username"
+            label="Nom d'utilisateur"
+            rules={[{ required: true, message: "Le nom d'utilisateur est requis" }]}
+        >
+            <Input />
+        </Form.Item>
+        <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: 'email', message: "Email invalide" }]}
+        >
+            <Input />
+        </Form.Item>
+    </Form>
+</Modal>
         </>
     );
 }

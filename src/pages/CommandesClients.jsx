@@ -457,6 +457,7 @@ const downloadInvoicePDF = useCallback((order) => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false, 
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
   });
 

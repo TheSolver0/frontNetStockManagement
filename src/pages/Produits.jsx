@@ -210,11 +210,13 @@ export function Produits() {
 
     const handleDelete = useCallback(async (id) => {
         try {
-            await axiosInstance.delete(`${API_URL}Products/${id}/`);
+            await axiosInstance.delete(`${API_URL}Products/${id}`);
             message.success('Produit supprimé avec succès');
             setProduits(prev => prev.filter(p => p.id !== id));
-        } catch {
-            message.error("Erreur lors de la suppression du produit !");
+        } catch (error) {
+            const msg = error.response?.data?.message || "Erreur lors de la suppression du produit !";
+            message.error(msg);
+            console.error('Erreur lors de la suppression', error);
         }
     }, []);
 

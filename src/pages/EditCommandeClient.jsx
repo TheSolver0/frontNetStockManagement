@@ -84,7 +84,7 @@ function ModifierCommande({ data, isEditing, setIsEditing }) {
         //     message.error("Le produit ne peut passer à ce statut. Stock insuffisant.");
         // } else {
             try {
-                const response = await axiosInstance.put(`${API_URL}Orders/${data.id}/`, values);
+                const response = await axiosInstance.put(`${API_URL}Orders/${data.id}`, values);
                 message.success("Commande client modifiée avec succès !");
                 setIsEditing(false);
             } catch (error) {
