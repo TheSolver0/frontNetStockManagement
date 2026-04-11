@@ -276,13 +276,25 @@ const fmtXAF = (value) =>
     .replace('.', ',')                        // virgule décimale à la française
     + ' XAF';
 
-const downloadInvoicePDF = useCallback((order) => {
+const downloadInvoicePDF = useCallback(async (order) => {
   const doc = new jsPDF();
   const config = getStatusConfig(order.status);
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
+  let logoData = null;
+  try {
+    const res = await fetch('/assets/images/logoKFTech.jpg');
+    const blob = await res.blob();
+    logoData = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch (_) {
+    console.warn('Logo non trouvé');
+  }
 
   const C = {
     navy:    [10,  30,  80],
@@ -314,7 +326,9 @@ const downloadInvoicePDF = useCallback((order) => {
 
   // ── 2. Logo + nom entreprise ───────────────────────────────────────────────
   try {
-    doc.addImage(logoUrl, 'JPEG', MARGIN, 7, 24, 24);
+   if (logoData) {
+    doc.addImage(logoData, 'JPEG', MARGIN, 7, 24, 24);
+  }
   } catch (_) {
     // fallback : carré placeholder si logo absent
     doc.setFillColor(...C.gold);

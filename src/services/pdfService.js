@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autotable from 'jspdf-autotable';
-import logoUrl from '../assets/images/logoKFTech.jpg';
+// import logoUrl from '../assets/images/logoKFTech.jpg';
 
 class PDFService {
   // ─── Palette ───────────────────────────────────────────────────────────────
@@ -18,8 +18,27 @@ class PDFService {
     white:      [255, 255, 255],
   };
 
+  
+
   // ─── URL du logo — remplacez ici ───────────────────────────────────────────
-  static LOGO_URL = logoUrl; // chemin vers votre logo (png recommandé pour la transparence)
+  static LOGO_URL = null;// chemin vers votre logo (png recommandé pour la transparence)
+  static async loadLogo() {
+    if (PDFService.LOGO_URL) return; // déjà en cache
+    try {
+      const res = await fetch('/assets/images/logoKFTech.jpg');
+      if (!res.ok) throw new Error('Logo introuvable');
+      const blob = await res.blob();
+      PDFService.LOGO_URL = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Logo non chargé:', e.message);
+      PDFService.LOGO_URL = null;
+    }
+  }
   static SHOP_NAME = 'KF Tech 237';
   static SHOP_SUBTITLE = 'Gestion des inventaires';
 
@@ -396,8 +415,9 @@ class PDFService {
   }
 
   // ─── Export : un seul inventaire ──────────────────────────────────────────
-  static exportSingleInventory(session) {
+  static async exportSingleInventory(session) {
     const doc = this.createDoc();
+    await PDFService.loadLogo();
     this.addHeader(doc, `Inventaire — ${session.reference}`);
 
     let y = 44;
@@ -415,8 +435,9 @@ class PDFService {
   }
 
   // ─── Export : tous les inventaires ────────────────────────────────────────
-  static exportAllInventories(sessions) {
+  static async exportAllInventories(sessions) {
     const doc = this.createDoc();
+    await PDFService.loadLogo();
 
     sessions.forEach((session, index) => {
       if (index > 0) doc.addPage();
