@@ -3,11 +3,12 @@ import { NavLink } from "react-router-dom";
 import {
     Button, Card, Col, Row, Form, Input, InputNumber, Modal,
     Select, Popconfirm, message, Tag, Space, Typography, Flex,
-    Grid, Drawer, Descriptions, Upload
+    Grid, Drawer, Descriptions,
 } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined,
-    QuestionCircleOutlined, CaretUpOutlined, CaretDownOutlined
+    QuestionCircleOutlined, CaretUpOutlined, CaretDownOutlined,
+    InboxOutlined,
 } from '@ant-design/icons';
 import {
     useReactTable,
@@ -18,6 +19,8 @@ import {
 } from '@tanstack/react-table';
 import { getProduits, getCategories, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
+import { usePermissions } from '../hooks/usePermissions';
+import { ProductImageUploadCreate, ProductGallery } from '../components/ProductImageUpload';
 
 // ─── Miniature produit ────────────────────────────────────────────────────────
 const ProductImage = ({ src, name, size = 40 }) =>
@@ -33,7 +36,9 @@ const ProductImage = ({ src, name, size = 40 }) =>
             background: 'var(--color-background-secondary)',
             display: 'flex', alignItems: 'center',
             justifyContent: 'center', fontSize: size * 0.45,
-        }}>📦</div>
+        }}>
+            <InboxOutlined style={{ color: '#bfbfbf' }} />
+        </div>
     );
 
 // ─── Formulaire d'ajout ───────────────────────────────────────────────────────
@@ -41,6 +46,7 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
     const [form] = Form.useForm();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState([]);
 
     useEffect(() => {
         if (open) {
@@ -48,6 +54,11 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
                 .then(setCategories)
                 .catch(err => console.error("Erreur catégories :", err));
         }
+    }, [open]);
+
+    // Reset les fichiers à la fermeture
+    useEffect(() => {
+        if (!open) setSelectedFiles([]);
     }, [open]);
 
     const handleFinish = async (values) => {
@@ -62,8 +73,9 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
             fd.append('threshold', values.threshold);
             if (values.sku) fd.append('sku', values.sku);
             if (values.location) fd.append('location', values.location);
-            // Ant Design Upload stocke le fichier dans .file quand beforeUpload retourne false
-            if (values.image?.file) fd.append('image', values.image.file);
+
+            // Multi-images — la 1ère sera automatiquement l'image principale
+            selectedFiles.forEach(file => fd.append('Images', file));
 
             const response = await axiosInstance.post(`${API_URL}Products/`, fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -71,6 +83,7 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
 
             message.success("Produit ajouté avec succès !");
             form.resetFields();
+            setSelectedFiles([]);
             onProductAdded(response.data);
         } catch (error) {
             message.error("Erreur lors de l'ajout du produit !");
@@ -86,16 +99,14 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
             open={open}
             onCancel={onCancel}
             footer={null}
+            width={600}
             confirmLoading={loading}
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} name="addProductForm">
-                <Form.Item
-                    name="image"
-                    label="Image du produit"
-                >
-                    <Upload beforeUpload={() => false} maxCount={1} listType="picture" accept="image/*">
-                        <Button icon={<PlusOutlined />}>Choisir une image</Button>
-                    </Upload>
+
+                {/* ── Multi-upload d'images ── */}
+                <Form.Item label="Images du produit">
+                    <ProductImageUploadCreate onFilesChange={setSelectedFiles} />
                 </Form.Item>
 
                 <Form.Item
@@ -193,6 +204,8 @@ export function Produits() {
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
+    const { canDelete } = usePermissions();
+
     useEffect(() => {
         setLoading(true);
         getProduits()
@@ -216,61 +229,64 @@ export function Produits() {
         } catch (error) {
             const msg = error.response?.data?.message || "Erreur lors de la suppression du produit !";
             message.error(msg);
-            console.error('Erreur lors de la suppression', error);
         }
     }, []);
 
-    const columnsRT = useMemo(() => [
-        { header: 'ID', accessorKey: 'id' },
-        {
-            header: 'Image',
-            accessorKey: 'imageUrl',
-            enableSorting: false,
-            cell: ({ row }) => (
-                <ProductImage src={row.original.imageUrl} name={row.original.name} size={40} />
-            ),
-        },
-        { header: 'Nom', accessorKey: 'name' },
-        {
-            header: 'Stock',
-            accessorKey: 'quantity',
-            cell: ({ row }) => (
-                <Tag color={row.original.quantity <= row.original.threshold ? 'volcano' : 'green'}>
-                    {row.original.quantity}
-                </Tag>
-            ),
-        },
-        {
-            header: 'Prix Unitaire',
-            accessorKey: 'price',
-            cell: ({ row }) => (
-                row.original.price ? `${row.original.price.toLocaleString()} XAF` : '-'
-            ),
-        },
-        { header: "Seuil d'Alerte", accessorKey: 'threshold' },
-        {
-            header: 'Actions',
-            id: 'actions',
-            enableSorting: false,
-            cell: ({ row }) => (
-                <Space size="middle">
-                    <NavLink to={`/produit/${row.original.id}`}>
-                        <Button type="primary" icon={<EditOutlined />} shape="circle" />
-                    </NavLink>
-                    <Popconfirm
-                        title="Confirmer la suppression"
-                        description="Êtes-vous sûr de vouloir supprimer ce produit ?"
-                        onConfirm={() => handleDelete(row.original.id)}
-                        icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-                        okText="Oui"
-                        cancelText="Non"
-                    >
-                        <Button danger icon={<DeleteOutlined />} shape="circle" />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ], [handleDelete]);
+    const columnsRT = useMemo(() => {
+        const cols = [
+            { header: 'ID', accessorKey: 'id' },
+            {
+                header: 'Image',
+                accessorKey: 'imageUrl',
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <ProductImage src={row.original.imageUrl} name={row.original.name} size={40} />
+                ),
+            },
+            { header: 'Nom', accessorKey: 'name' },
+            {
+                header: 'Stock',
+                accessorKey: 'quantity',
+                cell: ({ row }) => (
+                    <Tag color={row.original.quantity <= row.original.threshold ? 'volcano' : 'green'}>
+                        {row.original.quantity}
+                    </Tag>
+                ),
+            },
+            {
+                header: 'Prix Unitaire',
+                accessorKey: 'price',
+                cell: ({ row }) => row.original.price ? `${row.original.price.toLocaleString()} XAF` : '-',
+            },
+            { header: "Seuil d'Alerte", accessorKey: 'threshold' },
+            {
+                header: 'Actions',
+                id: 'actions',
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <Space size="middle">
+                        <NavLink to={`/produit/${row.original.id}`}>
+                            <Button type="primary" icon={<EditOutlined />} shape="circle" />
+                        </NavLink>
+                        {/* Bouton Supprimer — Admin et Gérant uniquement */}
+                        {canDelete && (
+                            <Popconfirm
+                                title="Confirmer la suppression"
+                                description="Êtes-vous sûr de vouloir supprimer ce produit ?"
+                                onConfirm={() => handleDelete(row.original.id)}
+                                icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                                okText="Oui"
+                                cancelText="Non"
+                            >
+                                <Button danger icon={<DeleteOutlined />} shape="circle" />
+                            </Popconfirm>
+                        )}
+                    </Space>
+                ),
+            },
+        ];
+        return cols;
+    }, [handleDelete, canDelete]);
 
     const filteredData = useMemo(() =>
         produits.filter(item =>
@@ -372,31 +388,30 @@ export function Produits() {
                                     hoverable
                                     onClick={() => openProduct(product)}
                                 >
-                                    {/* Image produit en haut de la carte */}
-                                    {product.imageUrl && (
-                                        <img
-                                            src={product.imageUrl}
-                                            alt={product.name}
-                                            style={{
-                                                width: '100%', height: 120, objectFit: 'cover',
-                                                borderRadius: 'var(--border-radius-md)', marginBottom: 8,
-                                            }}
+                                    {/* Galerie produit — carousel si plusieurs images */}
+                                    <div style={{ marginBottom: 8 }}>
+                                        <ProductGallery
+                                            images={product.images}
+                                            imageUrl={product.imageUrl}
+                                            name={product.name}
                                         />
-                                    )}
+                                    </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                         <div style={{ fontWeight: 700 }}>{product.name}</div>
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <Popconfirm
-                                                title="Confirmer la suppression"
-                                                onConfirm={() => handleDelete(product.id)}
-                                                okText="Oui"
-                                                cancelText="Non"
-                                            >
-                                                <Button size="small" danger onClick={(e) => e.stopPropagation()}>
-                                                    <DeleteOutlined />
-                                                </Button>
-                                            </Popconfirm>
+                                            {canDelete && (
+                                                <Popconfirm
+                                                    title="Confirmer la suppression"
+                                                    onConfirm={() => handleDelete(product.id)}
+                                                    okText="Oui"
+                                                    cancelText="Non"
+                                                >
+                                                    <Button size="small" danger onClick={(e) => e.stopPropagation()}>
+                                                        <DeleteOutlined />
+                                                    </Button>
+                                                </Popconfirm>
+                                            )}
                                             <NavLink to={`/produit/${product.id}`} onClick={(e) => e.stopPropagation()}>
                                                 <Button size="small" type="primary"><EditOutlined /></Button>
                                             </NavLink>
@@ -423,34 +438,32 @@ export function Produits() {
                         >
                             {selectedProduct && (
                                 <>
-                                    {/* Image dans le drawer */}
-                                    {selectedProduct.imageUrl && (
-                                        <img
-                                            src={selectedProduct.imageUrl}
-                                            alt={selectedProduct.name}
-                                            style={{
-                                                width: '100%', maxHeight: 200, objectFit: 'cover',
-                                                borderRadius: 'var(--border-radius-md)', marginBottom: 16,
-                                            }}
-                                        />
-                                    )}
-                                    <Descriptions column={1} size="small">
-                                        <Descriptions.Item label="Nom">{selectedProduct.name}</Descriptions.Item>
-                                        <Descriptions.Item label="Description">{selectedProduct.desc}</Descriptions.Item>
-                                        <Descriptions.Item label="Prix">{selectedProduct.price?.toLocaleString()} XAF</Descriptions.Item>
-                                        <Descriptions.Item label="Quantité">{selectedProduct.quantity}</Descriptions.Item>
-                                        <Descriptions.Item label="Seuil">{selectedProduct.threshold}</Descriptions.Item>
-                                    </Descriptions>
+                                    <ProductGallery
+                                        images={selectedProduct.images}
+                                        imageUrl={selectedProduct.imageUrl}
+                                        name={selectedProduct.name}
+                                    />
+                                    <div style={{ marginTop: 16 }}>
+                                        <Descriptions column={1} size="small">
+                                            <Descriptions.Item label="Nom">{selectedProduct.name}</Descriptions.Item>
+                                            <Descriptions.Item label="Description">{selectedProduct.desc}</Descriptions.Item>
+                                            <Descriptions.Item label="Prix">{selectedProduct.price?.toLocaleString()} XAF</Descriptions.Item>
+                                            <Descriptions.Item label="Quantité">{selectedProduct.quantity}</Descriptions.Item>
+                                            <Descriptions.Item label="Seuil">{selectedProduct.threshold}</Descriptions.Item>
+                                        </Descriptions>
+                                    </div>
 
                                     <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                                        <Popconfirm
-                                            title="Confirmer la suppression"
-                                            onConfirm={() => { handleDelete(selectedProduct.id); closeDrawer(); }}
-                                            okText="Oui"
-                                            cancelText="Non"
-                                        >
-                                            <Button danger>Supprimer</Button>
-                                        </Popconfirm>
+                                        {canDelete && (
+                                            <Popconfirm
+                                                title="Confirmer la suppression"
+                                                onConfirm={() => { handleDelete(selectedProduct.id); closeDrawer(); }}
+                                                okText="Oui"
+                                                cancelText="Non"
+                                            >
+                                                <Button danger>Supprimer</Button>
+                                            </Popconfirm>
+                                        )}
                                         <NavLink to={`/produit/${selectedProduct.id}`} onClick={closeDrawer}>
                                             <Button type="primary">Éditer</Button>
                                         </NavLink>

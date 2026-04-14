@@ -3,39 +3,15 @@ import { useParams } from "react-router-dom";
 import '@ant-design/v5-patch-for-react-19';
 import {
     Button, Card, Form, Input, InputNumber, Select, message,
-    Switch, Descriptions, Tag, Space, Flex, Upload, Image, Divider
+    Switch, Descriptions, Tag, Space, Flex, Divider, Alert,
 } from 'antd';
-import { EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, WarningOutlined } from '@ant-design/icons';
 import { getProduit, getCategories, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
+import { usePermissions } from '../hooks/usePermissions';
+import { ProductImageUploadEdit, ProductGallery } from '../components/ProductImageUpload';
 
-// ─── Image produit (mode lecture) ─────────────────────────────────────────────
-const ProductImageView = ({ imageUrl, name }) => {
-    if (!imageUrl) {
-        return (
-            <div style={{
-                width: '100%', maxWidth: 320, height: 220,
-                borderRadius: 8, border: '1px dashed var(--color-border-secondary)',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-text-secondary)', fontSize: 13,
-                background: 'var(--color-background-secondary)',
-            }}>
-                <span style={{ fontSize: 40, marginBottom: 8 }}>📦</span>
-                Aucune image
-            </div>
-        );
-    }
-    return (
-        <Image
-            src={imageUrl}
-            alt={name}
-            style={{ maxWidth: 320, maxHeight: 220, objectFit: 'cover', borderRadius: 8 }}
-            placeholder
-        />
-    );
-};
-
+// ─── Badge de statut stock ────────────────────────────────────────────────────
 const getStockStatus = (quantity, threshold) => {
     if (quantity <= 0) return <Tag color="red">Rupture de stock</Tag>;
     if (quantity <= threshold) return <Tag color="orange">Stock faible</Tag>;
@@ -47,8 +23,8 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
     const [form] = Form.useForm();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
-    // prévisualisation locale de la nouvelle image choisie
-    const [previewUrl, setPreviewUrl] = useState(null);
+
+    const { canDelete } = usePermissions();
 
     useEffect(() => {
         getCategories()
@@ -68,24 +44,14 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
                 sku: data.sku ?? '',
                 location: data.location ?? '',
             });
-            // reset prévisualisation quand on recharge le produit
-            setPreviewUrl(null);
         }
     }, [data, form]);
-
-    const handleImageChange = ({ file }) => {
-        // Ant Design Upload avec beforeUpload=false : file est le raw File
-        const raw = file.originFileObj ?? file;
-        if (raw && raw instanceof File) {
-            setPreviewUrl(URL.createObjectURL(raw));
-        }
-    };
 
     const onFinish = async (values) => {
         setLoading(true);
         try {
             const fd = new FormData();
-            fd.append('id', data.id); // Requis par le backend pour valider le PUT
+            fd.append('id', data.id);
             fd.append('name', values.name.trim());
             fd.append('desc', values.desc?.trim() ?? '');
             fd.append('categoryId', String(parseInt(values.categoryId, 10)));
@@ -94,13 +60,8 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
             fd.append('threshold', String(parseInt(values.threshold, 10)));
             fd.append('sku', values.sku ?? '');
             fd.append('location', values.location ?? '');
-
-            // Image : seulement si une nouvelle a été choisie
-            const uploadVal = values.image;
-            const rawFile = uploadVal?.file?.originFileObj ?? uploadVal?.file;
-            if (rawFile instanceof File) {
-                fd.append('image', rawFile);
-            }
+            // NE PAS inclure Images → les images existantes sont conservées
+            // La gestion des images se fait via ProductImageUploadEdit
 
             const response = await axiosInstance.put(
                 `${API_URL}Products/${data.id}`, fd,
@@ -109,8 +70,7 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
 
             message.success("Produit modifié avec succès !");
             setIsEditing(false);
-            // On utilise les données de la réponse ou les valeurs du formulaire par défaut
-            onSaved?.(response.data || { ...data, ...values }); 
+            onSaved?.(response.data || { ...data, ...values });
         } catch (error) {
             const msg = error.response?.data?.message || "Erreur lors de la modification du produit";
             message.error(msg);
@@ -121,12 +81,10 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
     };
 
     const layout = { labelCol: { span: 8 }, wrapperCol: { span: 16 } };
-
-    // Image affichée en lecture : prévisualisation locale ou URL serveur
-    const displayImageUrl = previewUrl ?? data.imageUrl;
-    const categoryLabel = categories.find(c => c.id === data.categoryId)?.title
-        ?? categories.find(c => c.id === data.categoryId)?.libelle
-        ?? 'Non spécifié';
+    const categoryLabel =
+        categories.find(c => c.id === data.categoryId)?.title ??
+        categories.find(c => c.id === data.categoryId)?.libelle ??
+        'Non spécifié';
 
     return (
         <Card
@@ -144,10 +102,14 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
             style={{ width: '100%', maxWidth: 800, margin: '0 auto' }}
         >
             {!isEditing ? (
+                /* ── Mode lecture ── */
                 <>
-                    {/* Image en mode lecture */}
                     <Flex justify="center" style={{ marginBottom: 24 }}>
-                        <ProductImageView imageUrl={data.imageUrl} name={data.name} />
+                        <ProductGallery
+                            images={data.images}
+                            imageUrl={data.imageUrl}
+                            name={data.name}
+                        />
                     </Flex>
 
                     <Descriptions bordered column={1} size="small">
@@ -169,92 +131,91 @@ function ModifierProduit({ data, isEditing, setIsEditing, onSaved }) {
                     </Descriptions>
                 </>
             ) : (
-                <Form {...layout} form={form} onFinish={onFinish} style={{ maxWidth: 600, margin: '0 auto' }}>
-
-                    {/* ── Image ── */}
+                /* ── Mode édition ── */
+                <>
+                    {/* ── Gestion des images (indépendante du formulaire principal) ── */}
                     <Divider orientation="left" plain style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-                        Image du produit
+                        Gestion des images
                     </Divider>
 
-                    {/* Prévisualisation de l'image actuelle ou nouvelle */}
-                    <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                        <div style={{ marginBottom: 8 }}>
-                            <ProductImageView imageUrl={displayImageUrl} name={data.name} />
-                        </div>
-                    </Form.Item>
+                    {data.id && (
+                        <>
+                            <Alert
+                                type="info"
+                                showIcon
+                                icon={<WarningOutlined />}
+                                message="Les modifications d'images sont appliquées immédiatement, indépendamment de la sauvegarde du formulaire."
+                                style={{ marginBottom: 16, fontSize: 12 }}
+                            />
+                            <ProductImageUploadEdit
+                                productId={data.id}
+                                initialImages={data.images ?? []}
+                                canDelete={canDelete}
+                            />
+                        </>
+                    )}
 
-                    <Form.Item name="image" label="Changer l'image">
-                        <Upload
-                            beforeUpload={() => false}
-                            maxCount={1}
-                            listType="picture"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={handleImageChange}
-                            showUploadList={{ showRemoveIcon: true }}
-                        >
-                            <Button icon={<PlusOutlined />}>Choisir une image</Button>
-                        </Upload>
-                    </Form.Item>
+                    {/* ── Formulaire infos produit ── */}
+                    <Form {...layout} form={form} onFinish={onFinish} style={{ maxWidth: 600, margin: '0 auto', marginTop: 24 }}>
 
-                    {/* ── Infos générales ── */}
-                    <Divider orientation="left" plain style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-                        Informations générales
-                    </Divider>
+                        <Divider orientation="left" plain style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                            Informations générales
+                        </Divider>
 
-                    <Form.Item name="name" label="Nom" rules={[{ required: true, message: 'Champ requis' }]}>
-                        <Input />
-                    </Form.Item>
+                        <Form.Item name="name" label="Nom" rules={[{ required: true, message: 'Champ requis' }]}>
+                            <Input />
+                        </Form.Item>
 
-                    <Form.Item name="desc" label="Description" rules={[{ required: true, message: 'Champ requis' }]}>
-                        <Input.TextArea rows={3} />
-                    </Form.Item>
+                        <Form.Item name="desc" label="Description" rules={[{ required: true, message: 'Champ requis' }]}>
+                            <Input.TextArea rows={3} />
+                        </Form.Item>
 
-                    <Form.Item name="categoryId" label="Catégorie" rules={[{ required: true, message: 'Champ requis' }]}>
-                        <Select>
-                            {categories.map(cat => (
-                                <Select.Option key={cat.id} value={cat.id}>
-                                    {cat.title ?? cat.libelle}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
+                        <Form.Item name="categoryId" label="Catégorie" rules={[{ required: true, message: 'Champ requis' }]}>
+                            <Select>
+                                {categories.map(cat => (
+                                    <Select.Option key={cat.id} value={cat.id}>
+                                        {cat.title ?? cat.libelle}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
 
-                    <Form.Item name="sku" label="SKU">
-                        <Input placeholder="Ex: PROD-001" />
-                    </Form.Item>
+                        <Form.Item name="sku" label="SKU">
+                            <Input placeholder="Ex: PROD-001" />
+                        </Form.Item>
 
-                    <Form.Item name="location" label="Emplacement">
-                        <Input placeholder="Ex: Rayon A3" />
-                    </Form.Item>
+                        <Form.Item name="location" label="Emplacement">
+                            <Input placeholder="Ex: Rayon A3" />
+                        </Form.Item>
 
-                    {/* ── Stock & Prix ── */}
-                    <Divider orientation="left" plain style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-                        Stock & Prix
-                    </Divider>
+                        <Divider orientation="left" plain style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                            Stock & Prix
+                        </Divider>
 
-                    <Form.Item name="quantity" label="Quantité" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
-                        <InputNumber style={{ width: '100%' }} min={0} />
-                    </Form.Item>
+                        <Form.Item name="quantity" label="Quantité" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
+                            <InputNumber style={{ width: '100%' }} min={0} />
+                        </Form.Item>
 
-                    <Form.Item name="price" label="Prix unitaire (XAF)" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
-                        <InputNumber style={{ width: '100%' }} min={0} />
-                    </Form.Item>
+                        <Form.Item name="price" label="Prix unitaire (XAF)" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
+                            <InputNumber style={{ width: '100%' }} min={0} />
+                        </Form.Item>
 
-                    <Form.Item name="threshold" label="Seuil d'alerte" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
-                        <InputNumber style={{ width: '100%' }} min={0} />
-                    </Form.Item>
+                        <Form.Item name="threshold" label="Seuil d'alerte" rules={[{ required: true, type: 'number', min: 0, message: 'Valeur invalide' }]}>
+                            <InputNumber style={{ width: '100%' }} min={0} />
+                        </Form.Item>
 
-                    <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                        <Space>
-                            <Button type="primary" htmlType="submit" loading={loading}>
-                                Enregistrer
-                            </Button>
-                            <Button onClick={() => { setIsEditing(false); setPreviewUrl(null); }}>
-                                Annuler
-                            </Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
+                        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+                            <Space>
+                                <Button type="primary" htmlType="submit" loading={loading}>
+                                    Enregistrer
+                                </Button>
+                                <Button onClick={() => setIsEditing(false)}>
+                                    Annuler
+                                </Button>
+                            </Space>
+                        </Form.Item>
+                    </Form>
+                </>
             )}
         </Card>
     );
@@ -272,7 +233,6 @@ export function EditProduit() {
             .catch(() => message.error("Erreur lors du chargement du produit"));
     }, [id]);
 
-    // Met à jour l'état local avec les données retournées par le PUT
     const handleSaved = (updated) => {
         setProduit(prev => ({ ...prev, ...updated }));
     };

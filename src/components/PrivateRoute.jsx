@@ -1,26 +1,24 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-// import jwtDecode from 'jwt-decode';
-import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '../contexts/AuthContext';
 
-const isTokenValid = (token) => {
-  try {
-    const { exp } = jwtDecode(token);
-    return exp * 1000 > Date.now(); // token encore valide
-  } catch {
-    return false;
-  }
-};
+/**
+ * <PrivateRoute>           → protège une route (auth requise)
+ * <PrivateRoute roles={['Admin','Gerant']}> → protège + vérifie le rôle
+ *
+ * Redirections :
+ *  - Non authentifié  → /login
+ *  - Rôle non autorisé → /unauthorized
+ */
+const PrivateRoute = ({ children, roles }) => {
+  const { isAuthenticated, hasRole } = useAuth();
 
-const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('accessToken');
-  const isAuthenticated = token && isTokenValid(token);
-
-  if (!isAuthenticated) {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('refreshToken');
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (roles && !hasRole(roles)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;

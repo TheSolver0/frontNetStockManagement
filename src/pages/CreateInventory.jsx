@@ -1,19 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import inventoryService from '../services/inventoryService';
 import {getCategories} from '../services/api.js';
 import './CreateInventory.css';
 import { message } from 'antd';
 
+const getUserId = () => {
+  // Essai 1 : depuis le token JWT
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const decoded = jwtDecode(token);
+      console.log('JWT decoded:', decoded);
+      const id = decoded.sub || decoded.nameid || decoded.userId || decoded.id || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+      if (id) return id;
+    }
+  } catch (e) { console.warn('JWT decode failed:', e); }
+
+  // Essai 2 : depuis le user en localStorage
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('User from localStorage:', user);
+    return user?.id || user?.userId || user?.Id || user?.UserId || null;
+  } catch { return null; }
+};
+
 const CreateInventory = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = getUserId();
 
 const [formData, setFormData] = useState({
   type: 0,
   categoryIds: [],
-  userId: String(currentUser?.id || currentUser?.userId || ''),
+  userId: userId ? parseInt(userId) : null, 
   notes: ''
 });
   const [loading, setLoading] = useState(false);
@@ -29,15 +50,20 @@ const [formData, setFormData] = useState({
     e.preventDefault();
     setLoading(true);
 
+    const payload = {
+    ...formData,
+    userId: parseInt(userId), // ← force en entier
+  };
+
+  console.log('Payload exact envoyé:', JSON.stringify(payload));
     try {
-      const session = await inventoryService.createSession(formData);
+      console.log('formData envoyé:', formData);
+      const session = await inventoryService.createSession(payload);
       message.success(`Inventaire créé : ${session.reference}`);
       navigate(`/inventory/${session.id}/count`);
     } catch (error) {
-       console.error('Erreur complète:', error.response?.data);
-    console.error('Validation errors:', JSON.stringify(error.response?.data?.errors, null, 2));
-    message.error('Erreur lors de la création de l\'inventaire');
-      console.error('Erreur lors de la création:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Erreur API:', JSON.stringify(error.response?.data, null, 2));
       message.error('Erreur lors de la création de l\'inventaire');
     } finally {
       setLoading(false);

@@ -1,45 +1,25 @@
-﻿﻿import React from 'react';
+import React from 'react';
 import { Button, Card, Checkbox, Col, Form, Input, message, Row, Typography } from 'antd';
-import axios from 'axios';
-import { API_URL } from '../services/api';
-import axiosInstance from '../services/axiosInstance';
-
-const loginUrl = `${API_URL}auth/login`;
-
-const onFinish = async (values) => {
-  const { email, password } = values;
-
-  try {
-    const response = await axiosInstance.post('auth/login', { email, password });
-    
-    console.log('Réponse complète:', response.data); //  debug
-
-    const { success, token, refresh, user, message: msg } = response.data;
-
-    if (!success || !token) {
-      message.error(msg || 'Connexion échouée.');
-      return;
-    }
-
-    localStorage.setItem('accessToken', token);
-    if (refresh) localStorage.setItem('refreshToken', refresh);
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-
-    message.success(msg || 'Connexion réussie !');
-    window.location.href = '/dashboard';
-
-  } catch (error) {
-    const msg = error.response?.data?.message || 'Erreur de connexion.';
-    message.error(msg);
-    console.error('Erreur:', error.response?.data);
-  }
-};
-
-const onFinishFailed = (errorInfo) => {
-  console.log('Failed:', errorInfo);
-};
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const onFinish = async (values) => {
+    const { email, password } = values;
+    try {
+      await login(email, password);
+      message.success('Connexion réussie !');
+      navigate('/dashboard');
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Erreur de connexion.';
+      message.error(msg);
+      console.error('Erreur login :', error);
+    }
+  };
+
   const pageStyle = {
     minHeight: '100vh',
     display: 'flex',
@@ -75,7 +55,6 @@ const Login = () => {
           layout="vertical"
           initialValues={{ remember: true }}
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
           <Form.Item

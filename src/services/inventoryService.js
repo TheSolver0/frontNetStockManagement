@@ -8,13 +8,12 @@ export const API_URL = "https://api.kftech237.com/api";
 
 const inventoryService = {
   createSession: async (data) => {
+  const userId = data.userId ? String(data.userId) : null;
   const payload = {
-    dto: {
-      type: data.type,
-      categoryIds: data.categoryIds,
-      userId: String(data.userId ?? ''),
-      notes: data.notes || ''
-    }
+    type: data.type,
+    categoryIds: data.categoryIds,
+    userId: userId,
+    notes: data.notes || ''
   };
   console.log('Payload final:', JSON.stringify(payload, null, 2));
   const response = await axiosInstance.post('/Inventory/sessions', payload);

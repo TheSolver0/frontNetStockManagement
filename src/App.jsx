@@ -3,21 +3,19 @@ import { createBrowserRouter, Outlet, RouterProvider, NavLink, useLocation, useN
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UploadOutlined,
   DashboardOutlined,
   UserOutlined,
   TransactionOutlined,
   CopyOutlined,
   UserSwitchOutlined,
   SettingOutlined,
-  DownloadOutlined,
   TagsOutlined,
   LogoutOutlined,
-  WarningOutlined,
-  SwapOutlined
+  SwapOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
-import { Button, Layout, Menu, theme, Typography, Card, Col, Row, Flex, Spin, Avatar, Space, Popconfirm, message, Drawer, Grid } from 'antd';
+import { Button, Layout, Menu, theme, Typography, Spin, Avatar, Space, Popconfirm, message, Drawer, Grid } from 'antd';
 import { Produits } from './pages/Produits';
 import { Clients } from './pages/Clients';
 import { CommandesClients } from './pages/CommandesClients';
@@ -33,46 +31,90 @@ import { EditCommandeFournisseur } from './pages/EditCommandeFournisseur';
 import { Parametres } from './pages/Parametres';
 import { getMouvements, getCommandesClient, getCommandesFournisseur, getProduits } from "./services/api.js";
 import Login from './pages/Login';
-import axiosInstance from './services/axiosInstance';
+import Unauthorized from './pages/Unauthorized';
 import PrivateRoute from './components/PrivateRoute';
 import CreateInventory from './pages/CreateInventory';
 import InventoryList from './pages/InventoryList';
 import InventoryCount from './pages/InventoryCount';
 import InventoryDetails from './pages/InventoryDetails';
 import { EditCategorie } from './pages/EditCategorie';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
+// ─── Router (défini hors du composant pour ne pas être recréé) ───────────────
+const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
+  { path: '/unauthorized', element: <Unauthorized /> },
+  {
+    path: '/',
+    element: (
+      <PrivateRoute>
+        <Root />
+      </PrivateRoute>
+    ),
+    children: [
+      { path: '/dashboard', element: <Dashboard /> },
+
+      // ── Accessible à tous les rôles authentifiés ──
+      { path: '/produits', element: <Produits /> },
+      { path: '/produit/:id', element: <EditProduit /> },
+      {
+        path: '/commandesclients',
+        element: <CommandesClients />,
+      },
+      {
+        path: '/commandeclients/:id',
+        element: <EditCommandeClient />,
+      },
+      { path: '/inventory', element: <InventoryList /> },
+      { path: '/inventory/new', element: <CreateInventory /> },
+      { path: '/inventory/:sessionId/count', element: <InventoryCount /> },
+      { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
+      { path: '/parametres', element: <Parametres /> },
+      { path: '/categories/:id', element: <EditCategorie /> },
+
+      // ── Admin + Gérant uniquement ──
+      {
+        path: '/clients',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><Clients /></PrivateRoute>,
+      },
+      {
+        path: '/client/:id',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><EditClient /></PrivateRoute>,
+      },
+      {
+        path: '/transactions',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><Transactions /></PrivateRoute>,
+      },
+      {
+        path: '/fournisseurs',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><Fournisseurs /></PrivateRoute>,
+      },
+      {
+        path: '/fournisseur/:id',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><EditFournisseur /></PrivateRoute>,
+      },
+      {
+        path: '/commandesfournisseurs',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><CommandesFournisseurs /></PrivateRoute>,
+      },
+      {
+        path: '/commandefournisseurs/:id',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><EditCommandeFournisseur /></PrivateRoute>,
+      },
+    ],
+  },
+]);
+
+// ─── App ─────────────────────────────────────────────────────────────────────
 const App = () => (
-  <RouterProvider router={createBrowserRouter([
-    { path: '/login', element: <Login /> },
-    {
-      path: '/',
-      element: <PrivateRoute><Root /></PrivateRoute>,
-      children: [
-        { path: '/dashboard', element: <Dashboard /> },
-        { path: '/produits', element: <Produits /> },
-        { path: '/produit/:id', element: <EditProduit /> },
-        { path: '/clients', element: <Clients /> },
-        { path: '/client/:id', element: <EditClient /> },
-        { path: '/transactions', element: <Transactions /> },
-        { path: '/fournisseurs', element: <Fournisseurs /> },
-        { path: '/fournisseur/:id', element: <EditFournisseur /> },
-        { path: '/commandesfournisseurs', element: <CommandesFournisseurs /> },
-        { path: '/commandefournisseurs/:id', element: <EditCommandeFournisseur /> },
-        { path: '/commandesclients', element: <CommandesClients /> },
-        { path: '/commandeclients/:id', element: <EditCommandeClient /> },
-        { path: '/inventory', element: <InventoryList /> },
-        { path: '/inventory/new', element: <CreateInventory /> },
-        { path: '/inventory/:sessionId/count', element: <InventoryCount /> },
-        { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
-        { path: '/parametres', element: <Parametres /> },
-        { path: '/categories/:id', element: <EditCategorie /> }
-      ],
-    }
-  ])} />
+  <AuthProvider>
+    <RouterProvider router={router} />
+  </AuthProvider>
 );
 
+// ─── Layout racine ────────────────────────────────────────────────────────────
 function Root() {
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
@@ -83,12 +125,12 @@ function Root() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { user, logout, hasRole } = useAuth();
+
   const [produits, setProduits] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [commandesF, setCommandesF] = useState([]);
   const [mouvements, setMouvements] = useState([]);
-
-  const user = useMemo(() => JSON.parse(localStorage.getItem('user')), []);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1500);
@@ -124,41 +166,91 @@ function Root() {
   const totalGain = useMemo(() => totalEntrees - totalSorties, [totalEntrees, totalSorties]);
 
   const handleLogout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
     try {
-      if (refreshToken) {
-        await axiosInstance.post('/auth/logout/', { refresh: refreshToken });
-      }
-    } catch (error) {
-      console.error('Logout failed', error);
-    } finally {
-      // On vide le stockage et on redirige quoi qu'il arrive
-      localStorage.clear();
+      await logout();
       message.success("Déconnexion réussie !");
+    } catch {
+      // logout vide quoi qu'il arrive
+    } finally {
       navigate('/login');
     }
   };
-  
-  const menuItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: <NavLink to="/dashboard">Dashboard</NavLink> },
-    { key: '/produits', icon: <TagsOutlined />, label: <NavLink to="/produits">Produits</NavLink> },
-    { key: '/clients', icon: <UserOutlined />, label: <NavLink to="/clients">Clients</NavLink> },
-    { key: '/transactions', icon: <TransactionOutlined />, label: <NavLink to="/transactions">Transactions</NavLink> },
-    { key: '/fournisseurs', icon: <UserSwitchOutlined />, label: <NavLink to="/fournisseurs">Fournisseurs</NavLink> },
-    {
-      key: 'commandes', icon: <CopyOutlined />, label: 'Commandes',
-      children: [
-        { key: '/commandesfournisseurs', label: <NavLink to="/commandesfournisseurs">Fournisseurs</NavLink> },
-        { key: '/commandesclients', label: <NavLink to="/commandesclients">Clients</NavLink> },
-      ],
-    },
-    { key: '/inventory', icon: <SwapOutlined />, label: <NavLink to="/inventory">Inventaires</NavLink> },
-    // { key: '/inventory/new', icon: <SettingOutlined />, label: <NavLink to="/inventory/new">Nouvel Inventaire</NavLink> },
-    // { key: '/inventory/:sessionId/count', icon: <SettingOutlined />, label: <NavLink to="/inventory/:sessionId/count">Comptage Inventaire</NavLink> },
 
-    { key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> },
-    // ...(user?.is_superuser ? [{ key: '/parametres', icon: <SettingOutlined />, label: <NavLink to="/parametres">Paramètres</NavLink> }] : []),
-  ];
+  // ── Items du menu selon le rôle ──────────────────────────────────────────
+  const menuItems = useMemo(() => {
+    const isAdminOrGerant = hasRole(['Admin', 'Gerant']);
+    const isAdmin = hasRole(['Admin']);
+
+    const items = [
+      {
+        key: '/dashboard',
+        icon: <DashboardOutlined />,
+        label: <NavLink to="/dashboard">Dashboard</NavLink>,
+      },
+      {
+        key: '/produits',
+        icon: <TagsOutlined />,
+        label: <NavLink to="/produits">Produits</NavLink>,
+      },
+    ];
+
+    // Clients, Transactions, Fournisseurs → Admin + Gérant
+    if (isAdminOrGerant) {
+      items.push(
+        {
+          key: '/clients',
+          icon: <UserOutlined />,
+          label: <NavLink to="/clients">Clients</NavLink>,
+        },
+        {
+          key: '/transactions',
+          icon: <TransactionOutlined />,
+          label: <NavLink to="/transactions">Transactions</NavLink>,
+        },
+        {
+          key: '/fournisseurs',
+          icon: <UserSwitchOutlined />,
+          label: <NavLink to="/fournisseurs">Fournisseurs</NavLink>,
+        },
+      );
+    }
+
+    // Commandes — Fournisseurs (Admin+Gérant) / Clients (tous)
+    const commandeChildren = [];
+    if (isAdminOrGerant) {
+      commandeChildren.push({
+        key: '/commandesfournisseurs',
+        label: <NavLink to="/commandesfournisseurs">Fournisseurs</NavLink>,
+      });
+    }
+    commandeChildren.push({
+      key: '/commandesclients',
+      label: <NavLink to="/commandesclients">Clients</NavLink>,
+    });
+
+    items.push({
+      key: 'commandes',
+      icon: <CopyOutlined />,
+      label: 'Commandes',
+      children: commandeChildren,
+    });
+
+    // Inventaires → tous
+    items.push({
+      key: '/inventory',
+      icon: <SwapOutlined />,
+      label: <NavLink to="/inventory">Inventaires</NavLink>,
+    });
+
+    // Paramètres → tous (contenu filtré par rôle à l'intérieur)
+    items.push({
+      key: '/parametres',
+      icon: <SettingOutlined />,
+      label: <NavLink to="/parametres">Paramètres</NavLink>,
+    });
+
+    return items;
+  }, [hasRole]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -170,6 +262,7 @@ function Root() {
           <Menu theme="light" mode="inline" selectedKeys={[location.pathname]} items={menuItems} />
         </Sider>
       ) : null}
+
       <Layout>
         <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
           <Button
@@ -181,7 +274,14 @@ function Root() {
           />
           <Space align="center">
             <Avatar size="large" icon={<UserOutlined />} />
-            <Typography.Text className="username-text">Bonjour, {user?.username || 'Admin'}</Typography.Text>
+            <Typography.Text className="username-text">
+              Bonjour, {user?.username || 'Utilisateur'}
+            </Typography.Text>
+            {user?.role && (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                ({user.role})
+              </Typography.Text>
+            )}
             <Popconfirm title="Voulez-vous vraiment vous déconnecter ?" onConfirm={handleLogout} okText="Oui" cancelText="Non">
               <Button type="primary" danger icon={<LogoutOutlined />}>
                 Déconnexion
@@ -205,10 +305,7 @@ function Root() {
         </Drawer>
 
         <Content style={{ margin: '24px 16px', padding: 24, background: 'var(--body-bg-color)' }}>
-          <div style={{ marginBottom: 24 }}>
-            
-            
-          </div>
+          <div style={{ marginBottom: 24 }} />
           {loading ? (
             <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>
           ) : (
