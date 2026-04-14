@@ -42,8 +42,9 @@ axiosInstance.interceptors.response.use(
   console.error('Status:', error.response?.status);
   console.error('Headers:', error.response?.headers);
 
-    // Si token expiré
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Si token expiré (ne pas tenter le refresh sur la route de login elle-même)
+    const isAuthEndpoint = originalRequest.url?.includes('auth/login') || originalRequest.url?.includes('auth/logout');
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');

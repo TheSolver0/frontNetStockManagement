@@ -49,9 +49,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const isAuthenticated = useCallback(() => {
-    if (!token) return false;
+    const currentToken = token || localStorage.getItem('accessToken');
+    if (!currentToken) return false;
     try {
-      const { exp } = jwtDecode(token);
+      const { exp } = jwtDecode(currentToken);
       return exp * 1000 > Date.now();
     } catch {
       return false;
