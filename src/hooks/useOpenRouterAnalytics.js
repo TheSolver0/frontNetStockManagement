@@ -18,14 +18,51 @@ export const useOpenRouterAnalytics = () => {
             return result;
 
         } catch (err) {
-            const errorMsg = 'Erreur analyse: ' + err.message;
-            setError(errorMsg);
-            throw new Error(errorMsg);
-        } finally {
+    console.warn("Erreur globale → fallback forcé:", err.message);
+
+    const fallback = generateFallbackAnalysis(
+        prepareAnalysisData(produits, commandes, mouvements)
+    );
+
+    setAnalysis(fallback);
+    setError("IA indisponible → analyse automatique utilisée");
+
+    return fallback; // ✅ ne JAMAIS throw ici
+} finally {
             setLoading(false);
         }
     };
+const generateFallbackAnalysis = (data) => {
+    const tauxLivraison = data.commandes_count > 0
+        ? ((data.commandes_livrees / data.commandes_count) * 100).toFixed(1)
+        : 0;
 
+    return `
+🤖 Analyse automatique (mode dégradé)
+
+📊 Vue d'ensemble
+- Produits: ${data.produits_count}
+- Commandes: ${data.commandes_count}
+- Livrées: ${data.commandes_livrees} (${tauxLivraison}%)
+- CA: ${data.total_ventes.toLocaleString()} XAF
+
+📌 Points clés
+- ${data.top_produits.length > 0 ? 'Produits principaux identifiés' : 'Peu de données produits'}
+- Activité commerciale ${data.commandes_count > 0 ? 'présente' : 'faible'}
+
+💡 Recommandations
+1. Surveiller les niveaux de stock
+2. Optimiser les produits les plus vendus
+3. Mettre en place des alertes de seuil
+
+⚠️ Risques
+- Rupture possible si stock faible
+- Dépendance aux top produits
+
+📈 Prévisions
+- Activité stable si tendance maintenue
+    `.trim();
+};
     const prepareAnalysisData = (produits, commandes, mouvements) => {
         return {
             produits_count: produits?.length || 0,
@@ -54,14 +91,11 @@ export const useOpenRouterAnalytics = () => {
 
         // Modèles gratuits sur OpenRouter
         const freeModels = [
-            "deepseek/deepseek-r1-0528:free",
-            "arcee-ai/trinity-large-preview:free",
-            "openrouter/andromeda-alpha",
-            /*"google/gemini-pro", // Gratuit
-            "meta-llama/llama-3-8b-instruct", // Gratuit
-            "microsoft/wizardlm-2-8x22b", // Gratuit
-            "qwen/qwen-2-7b-instruct" // Gratuit*/
-        ];
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-2-9b-it:free",
+    "microsoft/phi-3-mini-128k-instruct:free"
+];
 
         const headers = {
             'Authorization': `Bearer ${API_KEY}`,
@@ -107,7 +141,8 @@ export const useOpenRouterAnalytics = () => {
             }
         }
 
-        throw new Error('Tous les modèles gratuits sont indisponibles');
+        console.warn("Tous les modèles ont échoué → fallback activé");
+return generateFallbackAnalysis(data);
     };
 
     return { analyzeStockData, loading, error, analysis };

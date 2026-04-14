@@ -32,12 +32,13 @@ const InventoryCount = () => {
   const loadSession = async () => {
     try {
       const data = await inventoryService.getSessionById(sessionId);
-      setSession(data);
 
       // Trouver la première ligne non comptée
-      const firstUncountedIndex = data.lines.findIndex(
+      const firstUncountedIndex = data.lines?.findIndex(
         (line) => line.countedQuantity === null
-      );
+      ) ?? -1;
+
+      setSession(data);
       setCurrentLineIndex(firstUncountedIndex >= 0 ? firstUncountedIndex : 0);
     } catch (error) {
       console.error('Erreur:', error);
@@ -162,7 +163,7 @@ const InventoryCount = () => {
     return <div className="loading">Chargement...</div>;
   }
 
-  if (!session || session.lines.length === 0) {
+  if (!session || !session.lines || session.lines.length === 0) {
     return (
       <div className="empty-state">
         <p>Aucun produit à inventorier</p>
@@ -174,6 +175,11 @@ const InventoryCount = () => {
   }
 
   const currentLine = session.lines[currentLineIndex];
+
+  if (!currentLine) {
+    return <div className="loading">Chargement de la ligne...</div>;
+  }
+
   const countedLines = session.lines.filter((l) => l.countedQuantity !== null).length;
   const progress = (countedLines / session.lines.length) * 100;
 

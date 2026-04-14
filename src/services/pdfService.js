@@ -5,18 +5,18 @@ import autotable from 'jspdf-autotable';
 class PDFService {
   // ─── Palette ───────────────────────────────────────────────────────────────
   static C = {
-    navy:       [15,  40,  80],    // header principal
-    blue:       [30,  90, 200],    // accents
-    blueLight:  [235, 241, 255],   // fond section
-    teal:       [0,  150, 136],    // stat positive
-    red:        [211,  47,  47],   // stat négative
-    orange:     [245, 124,   0],   // avertissement
-    dark:       [30,  30,  30],    // texte principal
-    mid:        [90,  90,  90],    // texte secondaire
-    light:      [245, 246, 250],   // fond alternance
-    border:     [210, 215, 230],   // lignes
-    white:      [255, 255, 255],
-  };
+  navy:      [140,  60,  10],   // header principal     → brun-orange foncé
+  blue:      [195,  90,  30],   // accents              → orange moyen doux
+  blueLight: [255, 243, 230],   // fond section         → crème orangé
+  teal:      [0,   150, 100],   // stat positive        → vert (inchangé)
+  red:       [211,  47,  47],   // stat négative        → rouge (inchangé)
+  orange:    [210, 155,  50],   // avertissement        → or cuivré
+  dark:      [30,   25,  20],   // texte principal      → brun très foncé
+  mid:       [110,  95,  80],   // texte secondaire     → gris chaud
+  light:     [255, 250, 244],   // fond alternance      → blanc cassé chaud
+  border:    [225, 205, 185],   // lignes               → beige orangé
+  white:     [255, 255, 255],
+};
 
   
 

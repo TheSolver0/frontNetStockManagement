@@ -64,6 +64,7 @@ const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
   const [clients, setClients] = useState([]);
   const [addClientVisible, setAddClientVisible] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -98,12 +99,16 @@ const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
     setLoading(true);
     try {
       const response = await axiosInstance.post(`${API_URL}Orders/`, {
+        id: 0,                                // valeur par défaut pour la création
         quantity: parseInt(values.quantity, 10),
+        amount: parseInt(values.quantity, 10) * (selectedProduct?.price ?? 0),                           
+        status: 0,                    // statut initial d'une nouvelle commande
         productId: values.productId,
         customerId: values.customerId,
       });
       message.success("Commande ajoutée avec succès !");
       form.resetFields();
+      setSelectedProduct(null);
       setTimeout(() => {
         onOrderAdded(response.data);
       }, 1000);
@@ -121,18 +126,24 @@ const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
         <Form form={form} layout="vertical" onFinish={handleFinish}>
 
           <Form.Item name="productId" label="Produit" rules={[{ required: true }]}>
-            <Select placeholder="Sélectionnez un produit" showSearch
-              filterOption={(input, option) =>
-                (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {produits.map(p => (
-                <Select.Option key={p.id} value={p.id}>
-                  {p.name} - {p.price?.toLocaleString('fr-FR')} XAF
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+  <Select
+    placeholder="Sélectionnez un produit"
+    showSearch
+    filterOption={(input, option) =>
+      (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+    }
+    onChange={(value) => {
+      const product = produits.find(p => p.id === value);
+      setSelectedProduct(product);
+    }}
+  >
+    {produits.map(p => (
+      <Select.Option key={p.id} value={p.id}>
+        {p.name} - {p.price?.toLocaleString('fr-FR')} XAF
+      </Select.Option>
+    ))}
+  </Select>
+</Form.Item>
 
           <Form.Item name="quantity" label="Quantité" rules={[{ required: true, type: 'number', min: 1 }]}>
             <InputNumber min={1} style={{ width: '100%' }} />
@@ -211,6 +222,7 @@ export function CommandesClients() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sorting, setSorting] = useState([{ id: 'id', desc: true }]);
   const previousLivreesRef = useRef([]);
+
 
   // Drawer pour mobile
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -297,16 +309,16 @@ const downloadInvoicePDF = useCallback(async (order) => {
   }
 
   const C = {
-    navy:    [10,  30,  80],
-    blue:    [22, 119, 255],
-    blueLight:[235,243,255],
-    gold:    [212,175, 55],
-    dark:    [25,  25,  35],
-    mid:     [100,105,120],
-    light:   [248,249,252],
-    border:  [215,220,235],
-    white:   [255,255,255],
-  };
+  navy:      [180, 70,  0],    // orange foncé (remplace navy)
+  blue:      [230, 100, 20],   // orange moyen (remplace blue)
+  blueLight: [255, 240, 225],  // orange très clair (remplace blueLight)
+  gold:      [255, 200, 80],   // jaune doré (reste accent)
+  dark:      [25,  25,  35],
+  mid:       [100, 105, 120],
+  light:     [255, 248, 240],  // fond chaud (remplace light)
+  border:    [235, 210, 190],  // bordure orangée
+  white:     [255, 255, 255],
+};
 
   const W = 210;   // largeur page mm
   const MARGIN = 14;
@@ -321,7 +333,7 @@ const downloadInvoicePDF = useCallback(async (order) => {
   doc.rect(0, 42, W, 2, 'F');
 
   // Carré décoratif (cercle tronqué coin droit) — effet géométrique
-  doc.setFillColor(22, 60, 120);
+  doc.setFillColor(150, 55, 0); 
   doc.circle(W - 10, -5, 38, 'F');
 
   // ── 2. Logo + nom entreprise ───────────────────────────────────────────────
@@ -362,11 +374,11 @@ const downloadInvoicePDF = useCallback(async (order) => {
   doc.text(`Émise le ${dateStr}`, W - MARGIN, 33, { align: 'right' });
 
   // ── 4. Bandeau statut ────────────────────────────────────────────────────
-  const statusColors = {
-    paid:      [0, 150, 100],
-    pending:   [200, 120, 0],
-    cancelled: [180, 40, 40],
-  };
+const statusColors = {
+  paid:      [0,  150, 100],
+  pending:   [180, 70,   0],   // orange = votre couleur principale
+  cancelled: [180,  40,  40],
+};
   const sCx = statusColors[order.status] ?? [80, 80, 80];
   doc.setFillColor(...sCx);
   doc.roundedRect(MARGIN, 50, 55, 10, 2, 2, 'F');
@@ -505,17 +517,14 @@ const downloadInvoicePDF = useCallback(async (order) => {
 
   // Bloc TOTAL
   doc.setFillColor(...C.navy);
-  doc.roundedRect(130, finalY + 24, W - MARGIN - 130, 14, 2, 2, 'F');
+  doc.roundedRect(120, finalY + 24, W - MARGIN - 120, 14, 2, 2, 'F');
 
   doc.setTextColor(...C.white);
-  doc.setFontSize(11);
+  doc.setFontSize(10);                                                  
   doc.setFont('helvetica', 'bold');
-  doc.text('TOTAL TTC', 136, finalY + 33);
+  doc.text('TOTAL TTC', 126, finalY + 33);
   doc.setTextColor(...C.gold);
-  doc.text(
-    `${parseFloat(order.amount || 0).toLocaleString('fr-FR')} XAF`,
-    W - MARGIN - 3, finalY + 33, { align: 'right' }
-  );
+  doc.text(fmtXAF(order.amount), W - MARGIN, finalY + 33, { align: 'right' });
 
   // ── 8. Note de bas de page ────────────────────────────────────────────────
   doc.setDrawColor(...C.border);
