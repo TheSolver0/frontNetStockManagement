@@ -56,7 +56,7 @@ class PDFService {
     doc.rect(0, 0, 210, 38, 'F');
 
     // Bande accent bleue fine en bas du header
-    doc.setFillColor(...C.blue);
+    doc.setFillColor(...C.orange);
     doc.rect(0, 35, 210, 3, 'F');
 
     // ── Zone logo (gauche) ──
