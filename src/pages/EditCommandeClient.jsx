@@ -79,6 +79,8 @@ function ModifierCommande({ data, isEditing, setIsEditing }) {
         setLoading(true);
         values.id = data.id;
         const p = produits.find(p => p.id === values.productId);
+
+        values.amount = p ? p.price * values.quantity : 0;
         // if (values.quantity > (parseInt(p.qte - p.seuil)) && 
         //     (values.status === 'LIVREE' || values.status === 'EXPEDIEE' || values.status === 'PREPAREE')) {
         //     message.error("Le produit ne peut passer à ce statut. Stock insuffisant.");

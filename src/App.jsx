@@ -180,19 +180,22 @@ function Root() {
   const menuItems = useMemo(() => {
     const isAdminOrGerant = hasRole(['Admin', 'Gerant']);
     const isAdmin = hasRole(['Admin']);
+    const items = [];
 
-    const items = [
+    if (isAdminOrGerant) {
+    items.push(
       {
         key: '/dashboard',
         icon: <DashboardOutlined />,
         label: <NavLink to="/dashboard">Dashboard</NavLink>,
-      },
-      {
+      },);
+  }
+  
+  items.push({
         key: '/produits',
         icon: <TagsOutlined />,
         label: <NavLink to="/produits">Produits</NavLink>,
-      },
-    ];
+      },);
 
     // Clients, Transactions, Fournisseurs → Admin + Gérant
     if (isAdminOrGerant) {
