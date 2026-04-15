@@ -171,7 +171,7 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
                     </Col>
                 </Row>
 
-                <Row gutter={16}>
+                {/* <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item name="sku" label="SKU">
                             <Input />
@@ -182,7 +182,7 @@ const AddProductForm = ({ open, onCancel, onProductAdded }) => {
                             <Input />
                         </Form.Item>
                     </Col>
-                </Row>
+                </Row> */}
 
                 <Form.Item>
                     <Button type="primary" htmlType="submit" loading={loading} block>

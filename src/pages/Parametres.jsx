@@ -248,7 +248,7 @@ export function Parametres() {
 
     const handleSaveUser = async (values) => {
         try {
-            await axiosInstance.put(`${API_URL}Gerants/${editingUser.id}`, {
+            await axiosInstance.put(`${API_URL}users/${editingUser.id}`, {
                 username: values.username,
                 email: values.email,
                 role: values.role,
@@ -264,7 +264,7 @@ export function Parametres() {
 
     const handleDelete = async (id) => {
         try {
-            await axiosInstance.delete(`${API_URL}gerants/${id}/`);
+            await axiosInstance.delete(`${API_URL}users/${id}/`);
             message.success('Utilisateur supprimé');
             setUser(prev => prev.filter(u => u.id !== id));
         } catch (error) {

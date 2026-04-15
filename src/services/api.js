@@ -56,6 +56,6 @@ export const getCommandeFournisseur = async (id) => {
   return response.data;
 };
 export const getUsers = async () => {
-  const response = await axiosInstance.get(`${API_URL}gerants/`);
+  const response = await axiosInstance.get(`${API_URL}users/`);
   return response.data;
 };
