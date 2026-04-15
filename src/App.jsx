@@ -54,7 +54,7 @@ const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { path: '/dashboard', element: <Dashboard /> },
+      { path: '/dashboard', element: <PrivateRoute roles={['Admin', 'Gerant']}><Dashboard /></PrivateRoute> },
 
       // ── Accessible à tous les rôles authentifiés ──
       { path: '/produits', element: <Produits /> },

@@ -10,9 +10,15 @@ const Login = () => {
   const onFinish = async (values) => {
     const { email, password } = values;
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       message.success('Connexion réussie !');
-      navigate('/dashboard');
+
+      // Redirection dynamique selon le rôle
+      if (loggedInUser?.role === 'Employe') {
+        navigate('/produits');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Erreur de connexion.';
       message.error(msg);
