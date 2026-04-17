@@ -5,16 +5,16 @@ import autotable from 'jspdf-autotable';
 class PDFService {
   // ─── Palette ───────────────────────────────────────────────────────────────
   static C = {
-  navy:      [140,  60,  10],   // header principal     → brun-orange foncé
-  blue:      [195,  90,  30],   // accents              → orange moyen doux
-  blueLight: [255, 243, 230],   // fond section         → crème orangé
+  navy:      [120,  80,  50],   // header principal     → brun tamisé
+  blue:      [175, 120,  75],   // accents              → terre cuite douce
+  blueLight: [255, 247, 238],   // fond section         → crème très clair
   teal:      [0,   150, 100],   // stat positive        → vert (inchangé)
   red:       [211,  47,  47],   // stat négative        → rouge (inchangé)
-  orange:    [210, 155,  50],   // avertissement        → or cuivré
+  orange:    [195, 155,  80],   // avertissement        → or atténué
   dark:      [30,   25,  20],   // texte principal      → brun très foncé
   mid:       [110,  95,  80],   // texte secondaire     → gris chaud
-  light:     [255, 250, 244],   // fond alternance      → blanc cassé chaud
-  border:    [225, 205, 185],   // lignes               → beige orangé
+  light:     [255, 251, 246],   // fond alternance      → blanc cassé chaud
+  border:    [222, 207, 190],   // lignes               → beige doux
   white:     [255, 255, 255],
 };
 

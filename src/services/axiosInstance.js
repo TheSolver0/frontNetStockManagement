@@ -6,7 +6,7 @@ const baseURL = "https://api.kftech237.com/api/";
 
 const axiosInstance = axios.create({
   baseURL: baseURL,
-  timeout: 5000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.error('❌ Erreur API:', error.response?.status, error.response?.statusText, originalRequest?.url);
+    console.error('❌ Erreur API:', error.response?.status ?? error.code, error.response?.statusText ?? error.message, originalRequest?.url);
     console.error('Détails erreur:', error.response?.data);
     console.error('Détails erreur (stringify):', JSON.stringify(error.response?.data));
   console.error('Status:', error.response?.status);

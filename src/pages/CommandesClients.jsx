@@ -53,7 +53,14 @@ import axiosInstance from '../services/axiosInstance';
 import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import logoUrl from '../assets/images/logoKFTech.jpg'; 
+import logoUrl from '../assets/images/logoKFTech.jpg';
+
+const fmtXAF = (value) =>
+  parseFloat(value || 0)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    .replace('.', ',')
+    + ' XAF';
 
 // Modal pour ajouter une commande
 const AddOrderForm = ({ open, onCancel, onOrderAdded }) => {
@@ -240,7 +247,10 @@ export function CommandesClients() {
           }
         });
       })
-      .catch(error => console.error("Erreur lors du chargement des commandes :", error))
+      .catch(error => {
+        console.error("Erreur lors du chargement des commandes :", error);
+        message.error("Erreur lors de la récupération des commandes. Vérifiez votre connexion.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -281,13 +291,6 @@ export function CommandesClients() {
   return { total: commandes.length, enAttente, livrees, totalMontant };
 }, [commandes]);
 
-const fmtXAF = (value) =>
-  parseFloat(value || 0)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') // espace simple comme séparateur milliers
-    .replace('.', ',')                        // virgule décimale à la française
-    + ' XAF';
-
 const downloadInvoicePDF = useCallback(async (order) => {
   const doc = new jsPDF();
   const config = getStatusConfig(order.status);
@@ -309,14 +312,14 @@ const downloadInvoicePDF = useCallback(async (order) => {
   }
 
   const C = {
-  navy:      [180, 70,  0],    // orange foncé (remplace navy)
-  blue:      [230, 100, 20],   // orange moyen (remplace blue)
-  blueLight: [255, 240, 225],  // orange très clair (remplace blueLight)
-  gold:      [255, 200, 80],   // jaune doré (reste accent)
+  navy:      [150, 85,  45],   // brun-orange foncé tamisé
+  blue:      [195, 130, 75],   // orange moyen doux
+  blueLight: [255, 246, 236],  // fond crème très léger
+  gold:      [215, 180, 100],  // or cuivré discret
   dark:      [25,  25,  35],
   mid:       [100, 105, 120],
-  light:     [255, 248, 240],  // fond chaud (remplace light)
-  border:    [235, 210, 190],  // bordure orangée
+  light:     [255, 250, 244],  // fond chaud
+  border:    [230, 212, 195],  // bordure beige
   white:     [255, 255, 255],
 };
 
@@ -551,7 +554,7 @@ const statusColors = {
   doc.text('KF TECH  •  Douala, rond-point deido  •  +237 696 853 948 / +237 651 271 617  •  contact@kftech237.com', 105, 291, { align: 'center' });
 
   doc.save(`facture-${order.id}.pdf`);
-}, [getStatusConfig, downloadInvoicePDF]);
+}, [getStatusConfig]);
 
   // Colonnes pour React Table
   const columnsRT = useMemo(() => [
@@ -628,7 +631,7 @@ const statusColors = {
       </Space>
     ),
   },
-], [handleDelete, getStatusConfig]);
+], [handleDelete, getStatusConfig, downloadInvoicePDF]);
 
 
   const filteredData = useMemo(() =>
