@@ -53,7 +53,7 @@ import axiosInstance from '../services/axiosInstance';
 import { useCommandesReducer } from '../hooks/useCommandesReducer.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import logoUrl from '../assets/images/logoKFTech.jpg';
+import logoUrl from '../assets/Images/logoKFTech.jpg';
 
 const fmtXAF = (value) =>
   parseFloat(value || 0)
