@@ -39,7 +39,7 @@ class PDFService {
       PDFService.LOGO_URL = null;
     }
   }
-  static SHOP_NAME = 'KF Tech 237';
+  static SHOP_NAME = 'KF TECH';
   static SHOP_SUBTITLE = 'Gestion des inventaires';
 
   // ─── Créer le doc ──────────────────────────────────────────────────────────
@@ -87,6 +87,10 @@ class PDFService {
     doc.setFontSize(8);
     doc.setTextColor(180, 200, 240);
     doc.text(this.SHOP_SUBTITLE, 44, 21);
+
+    doc.setFontSize(7);
+    doc.text('NIU: M092518287412M | RGCM: CM-DLA-01-2025-B113-01196', 44, 26);
+    doc.text('Douala, rond-point deido', 44, 30);
 
     // ── Titre du rapport (droite) ──
     doc.setFont('helvetica', 'bold');

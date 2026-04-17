@@ -354,12 +354,16 @@ const downloadInvoicePDF = useCallback(async (order) => {
   doc.setTextColor(...C.white);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('KF TECH', MARGIN + 28, 18);
+  doc.text('KF TECH', MARGIN + 28, 14);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(190, 205, 235);
-  doc.text('Solutions Informatiques & Gestion', MARGIN + 28, 24);
+  doc.text('Solutions Informatiques & Gestion', MARGIN + 28, 19);
+
+  doc.setFontSize(7);
+  doc.text('NIU: M092518287412M | RGCM: CM-DLA-01-2025-B113-01196', MARGIN + 28, 24);
+  doc.text('Douala, rond-point deido', MARGIN + 28, 28);
 
   // ── 3. Titre FACTURE + numéro (aligné à droite) ───────────────────────────
   doc.setTextColor(...C.white);
@@ -458,7 +462,7 @@ const statusColors = {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...C.dark);
     doc.text(value, colB + 76, y, { align: 'right' });
-}, [getStatusConfig]);
+  });
 
   // ── 6. Tableau articles ───────────────────────────────────────────────────
   autoTable(doc, {
@@ -534,7 +538,7 @@ const statusColors = {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(...C.mid);
-  doc.text('Merci pour votre confiance. Pour toute question, contactez-nous à support@kftech237.com', 105, 277, { align: 'center' });
+  doc.text('Merci pour votre confiance. Pour toute question, contactez-nous à contact@kftech237.com', 105, 277, { align: 'center' });
 
   // Bande finale décorative
   doc.setFillColor(...C.navy);
@@ -544,10 +548,10 @@ const statusColors = {
   doc.setTextColor(190, 205, 235);
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('KF TECH  •  Solutions Informatiques  •  Douala, Cameroun  •  www.kftech237.com', 105, 291, { align: 'center' });
+  doc.text('KF TECH  •  Douala, rond-point deido  •  +237 696 853 948 / +237 651 271 617  •  contact@kftech237.com', 105, 291, { align: 'center' });
 
   doc.save(`facture-${order.id}.pdf`);
-}, [getStatusConfig]);
+}, [getStatusConfig, downloadInvoicePDF]);
 
   // Colonnes pour React Table
   const columnsRT = useMemo(() => [
