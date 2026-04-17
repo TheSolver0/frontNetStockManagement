@@ -379,7 +379,7 @@ const downloadInvoicePDF = useCallback(async (order) => {
   doc.setTextColor(190, 205, 235);
   doc.text(`N° ${order.id}`, W - MARGIN, 27, { align: 'right' });
   doc.text(`Émise le ${dateStr}`, W - MARGIN, 33, { align: 'right' });
-
+ 
   // ── 4. Bandeau statut ────────────────────────────────────────────────────
 const statusColors = {
   paid:      [0,  150, 100],
