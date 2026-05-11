@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
     Button, Card, Col, Row, Form, Input, InputNumber, Modal,
     Select, Popconfirm, message, Tag, Space, Typography, Flex,
-    Grid, Drawer, Descriptions,
+    Grid, Drawer, Descriptions, Tooltip,
 } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined,
@@ -17,7 +17,7 @@ import {
     getPaginationRowModel,
     flexRender,
 } from '@tanstack/react-table';
-import { getProduits, getCategories, API_URL } from "../services/api.js";
+import { getProduits, getCategories, getEcomProducts, API_URL } from "../services/api.js";
 import axiosInstance from '../services/axiosInstance';
 import { usePermissions } from '../hooks/usePermissions';
 import { ProductImageUploadCreate, ProductGallery } from '../components/ProductImageUpload';
@@ -208,10 +208,22 @@ export function Produits() {
 
     useEffect(() => {
         setLoading(true);
-        getProduits()
-            .then(data => {
-                setProduits(data);
-                data.forEach(p => {
+        Promise.all([
+            getProduits(),
+            getEcomProducts().catch(() => []), // enrichissement promo — échec silencieux
+        ])
+            .then(([produitsData, ecomData]) => {
+                const ecomMap = Object.fromEntries(
+                    ecomData.map(p => [p.id, {
+                        en_promo: p.en_promo,
+                        prix_remise: p.prix_remise,
+                        pourcentage_remise: p.pourcentage_remise,
+                        evenements_actifs: p.evenements_actifs ?? [],
+                    }])
+                );
+                const merged = produitsData.map(p => ({ ...p, ...(ecomMap[p.id] ?? {}) }));
+                setProduits(merged);
+                merged.forEach(p => {
                     if (p.quantity <= p.threshold) {
                         message.warning(`Le stock du produit "${p.name}" est bas !`);
                     }
@@ -256,7 +268,55 @@ export function Produits() {
             {
                 header: 'Prix Unitaire',
                 accessorKey: 'price',
-                cell: ({ row }) => row.original.price ? `${row.original.price.toLocaleString()} XAF` : '-',
+                cell: ({ row }) => {
+                    const p = row.original;
+                    if (p.en_promo && p.prix_remise) {
+                        return (
+                            <Space direction="vertical" size={0}>
+                                <Typography.Text delete type="secondary" style={{ fontSize: 11 }}>
+                                    {p.price?.toLocaleString()} XAF
+                                </Typography.Text>
+                                <Typography.Text strong style={{ color: '#f5222d' }}>
+                                    {p.prix_remise?.toLocaleString()} XAF
+                                </Typography.Text>
+                            </Space>
+                        );
+                    }
+                    return p.price ? `${p.price.toLocaleString()} XAF` : '-';
+                },
+            },
+            {
+                header: 'Promo',
+                id: 'promo',
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const p = row.original;
+                    if (!p.en_promo) return null;
+                    return (
+                        <Space wrap size={4}>
+                            {p.pourcentage_remise && (
+                                <Tag color="red" style={{ marginRight: 0 }}>
+                                    -{p.pourcentage_remise}%
+                                </Tag>
+                            )}
+                            {(p.evenements_actifs ?? []).map(ev => (
+                                <Tooltip key={ev.id} title={ev.nom}>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        padding: '1px 8px',
+                                        borderRadius: 10,
+                                        background: ev.bg_color || '#333',
+                                        color: ev.text_color || '#fff',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                    }}>
+                                        {ev.badge}
+                                    </span>
+                                </Tooltip>
+                            ))}
+                        </Space>
+                    );
+                },
             },
             { header: "Seuil d'Alerte", accessorKey: 'threshold' },
             {
@@ -424,8 +484,44 @@ export function Produits() {
                                     </div>
                                     <div className="card-row">
                                         <div style={{ color: 'var(--muted)', fontSize: 12 }}>Prix</div>
-                                        <div style={{ fontWeight: 600 }}>{product.price?.toLocaleString()} XAF</div>
+                                        <div>
+                                            {product.en_promo && product.prix_remise ? (
+                                                <Space direction="vertical" size={0}>
+                                                    <Typography.Text delete type="secondary" style={{ fontSize: 11 }}>
+                                                        {product.price?.toLocaleString()} XAF
+                                                    </Typography.Text>
+                                                    <Typography.Text strong style={{ color: '#f5222d', fontWeight: 600 }}>
+                                                        {product.prix_remise?.toLocaleString()} XAF
+                                                    </Typography.Text>
+                                                </Space>
+                                            ) : (
+                                                <span style={{ fontWeight: 600 }}>{product.price?.toLocaleString()} XAF</span>
+                                            )}
+                                        </div>
                                     </div>
+                                    {product.en_promo && (
+                                        <div className="card-row">
+                                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>Promo</div>
+                                            <Space wrap size={4}>
+                                                {product.pourcentage_remise && (
+                                                    <Tag color="red" style={{ marginRight: 0 }}>-{product.pourcentage_remise}%</Tag>
+                                                )}
+                                                {(product.evenements_actifs ?? []).map(ev => (
+                                                    <span key={ev.id} style={{
+                                                        display: 'inline-block',
+                                                        padding: '1px 8px',
+                                                        borderRadius: 10,
+                                                        background: ev.bg_color || '#333',
+                                                        color: ev.text_color || '#fff',
+                                                        fontSize: 10,
+                                                        fontWeight: 700,
+                                                    }}>
+                                                        {ev.badge}
+                                                    </span>
+                                                ))}
+                                            </Space>
+                                        </div>
+                                    )}
                                 </Card>
                             ))}
                         </div>
@@ -447,7 +543,42 @@ export function Produits() {
                                         <Descriptions column={1} size="small">
                                             <Descriptions.Item label="Nom">{selectedProduct.name}</Descriptions.Item>
                                             <Descriptions.Item label="Description">{selectedProduct.desc}</Descriptions.Item>
-                                            <Descriptions.Item label="Prix">{selectedProduct.price?.toLocaleString()} XAF</Descriptions.Item>
+                                            <Descriptions.Item label="Prix">
+                                                {selectedProduct.en_promo && selectedProduct.prix_remise ? (
+                                                    <Space direction="vertical" size={0}>
+                                                        <Typography.Text delete type="secondary" style={{ fontSize: 11 }}>
+                                                            {selectedProduct.price?.toLocaleString()} XAF
+                                                        </Typography.Text>
+                                                        <Typography.Text strong style={{ color: '#f5222d' }}>
+                                                            {selectedProduct.prix_remise?.toLocaleString()} XAF
+                                                        </Typography.Text>
+                                                    </Space>
+                                                ) : (
+                                                    `${selectedProduct.price?.toLocaleString()} XAF`
+                                                )}
+                                            </Descriptions.Item>
+                                            {selectedProduct.en_promo && (
+                                                <Descriptions.Item label="Promo">
+                                                    <Space wrap size={4}>
+                                                        {selectedProduct.pourcentage_remise && (
+                                                            <Tag color="red">-{selectedProduct.pourcentage_remise}%</Tag>
+                                                        )}
+                                                        {(selectedProduct.evenements_actifs ?? []).map(ev => (
+                                                            <span key={ev.id} style={{
+                                                                display: 'inline-block',
+                                                                padding: '1px 8px',
+                                                                borderRadius: 10,
+                                                                background: ev.bg_color || '#333',
+                                                                color: ev.text_color || '#fff',
+                                                                fontSize: 10,
+                                                                fontWeight: 700,
+                                                            }}>
+                                                                {ev.badge}
+                                                            </span>
+                                                        ))}
+                                                    </Space>
+                                                </Descriptions.Item>
+                                            )}
                                             <Descriptions.Item label="Quantité">{selectedProduct.quantity}</Descriptions.Item>
                                             <Descriptions.Item label="Seuil">{selectedProduct.threshold}</Descriptions.Item>
                                         </Descriptions>

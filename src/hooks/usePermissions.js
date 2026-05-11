@@ -44,5 +44,7 @@ export function usePermissions() {
     canCreateStockMovement: isAdminOrGerant,
     // Modifier / supprimer une commande client
     canModifyOrders: isAdminOrGerant,
+    // Gérer les promotions et événements
+    canManagePromos: isAdminOrGerant,
   };
 }

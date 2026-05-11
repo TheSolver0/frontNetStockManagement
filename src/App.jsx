@@ -13,6 +13,7 @@ import {
   LogoutOutlined,
   SwapOutlined,
   TeamOutlined,
+  GiftOutlined,
 } from '@ant-design/icons';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { Button, Layout, Menu, theme, Typography, Spin, Avatar, Space, Popconfirm, message, Drawer, Grid } from 'antd';
@@ -38,6 +39,7 @@ import InventoryList from './pages/InventoryList';
 import InventoryCount from './pages/InventoryCount';
 import InventoryDetails from './pages/InventoryDetails';
 import { EditCategorie } from './pages/EditCategorie';
+import { Promotions } from './pages/Promotions';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const { Header, Sider, Content } = Layout;
@@ -73,6 +75,10 @@ const router = createBrowserRouter([
       { path: '/inventory/:sessionId/details', element: <InventoryDetails /> },
       { path: '/parametres', element: <Parametres /> },
       { path: '/categories/:id', element: <EditCategorie /> },
+      {
+        path: '/promotions',
+        element: <PrivateRoute roles={['Admin', 'Gerant']}><Promotions /></PrivateRoute>,
+      },
 
       // ── Admin + Gérant uniquement ──
       {
@@ -244,6 +250,15 @@ function Root() {
       icon: <SwapOutlined />,
       label: <NavLink to="/inventory">Inventaires</NavLink>,
     });
+
+    // Promotions & Événements → Admin + Gérant
+    if (isAdminOrGerant) {
+      items.push({
+        key: '/promotions',
+        icon: <GiftOutlined />,
+        label: <NavLink to="/promotions">Promotions</NavLink>,
+      });
+    }
 
     // Paramètres → tous (contenu filtré par rôle à l'intérieur)
     items.push({
