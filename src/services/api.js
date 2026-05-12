@@ -62,7 +62,7 @@ export const getUsers = async () => {
 // ─── Produits e-commerce (avec infos promo) ───────────────────────────────────
 export const getEcomProducts = async (params = {}) => {
   const response = await axiosInstance.get(`${API_URL}ecom/products`, { params });
-  return response.data;
+  return response.data.produits ?? response.data;
 };
 
 // ─── Événements ───────────────────────────────────────────────────────────────
